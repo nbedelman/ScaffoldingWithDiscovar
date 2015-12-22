@@ -125,13 +125,14 @@ for chromosome in chromosomes:
     chromosome.combineGroups("first")
     chromosome.writeResults()
 #
-for chromosome in chromosomes:
-    if chromosome.getName() == "Hmel204":
-        Hmel204 = chromosome
-for item in Hmel204.getGroups():
-    scafList=[scaf.getName() for scaf in item.getScaffoldList()]
-    if "Hmel204013" in scafList:
-        group=item  
+
+# for chromosome in chromosomes:
+#     if chromosome.getName() == "Hmel204":
+#         Hmel204 = chromosome
+# for item in Hmel203.getGroups():
+#     scafList=[scaf.getName() for scaf in item.getScaffoldList()]
+#     if "Hmel204013" in scafList:
+#         group=item
 
 #superScaffolds=[]
 #contig=group.getContigList()[0]
@@ -179,6 +180,7 @@ for item in Hmel204.getGroups():
 #fullGroupJoin=group.joinSuperScaffolds(superScaffolds,[])
 #if fullGroupJoin != []:
 #    fullGroupJoin.alignWithBestScaf()
+
    
                
                       
