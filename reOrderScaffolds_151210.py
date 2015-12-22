@@ -118,7 +118,7 @@ def makeChromosomes(chromDict):
         chromosomes.append(Chromosome(key, chromDict[key][0], chromDict[key][1]))
     return chromosomes
         
-chromosomes=runAll("./fullOverlaps/","agpToBed_chroms.bed")      
+chromosomes=runAll("simulatedData/fullOverlaps/","simulatedData/agpToBed_chroms.bed")      
 
 for chromosome in chromosomes:
     print chromosome.getName()
@@ -128,7 +128,7 @@ for chromosome in chromosomes:
 for chromosome in chromosomes:
     if chromosome.getName() == "Hmel204":
         Hmel204 = chromosome
-for item in Hmel203.getGroups():
+for item in Hmel204.getGroups():
     scafList=[scaf.getName() for scaf in item.getScaffoldList()]
     if "Hmel204013" in scafList:
         group=item  
@@ -159,26 +159,26 @@ for item in Hmel203.getGroups():
 #    superScaffolds.append(fullContigJoin)
         
 
-superScaffolds=[]
-for contig in group.getContigList():
-    segments=[]
-    smallIgnores=[]
-    for seg in contig.getCombinedSegments():
-        if seg.getLength() < 1000:
-            smallIgnores.append(copy.copy(seg))
-        else:
-            segments.append(copy.copy(seg))
-    orderedSegs=group.orderSegs(segments)
-    palindromeChecked=group.checkPalindrome(orderedSegs)
-    joinedSegments=group.joinEachSegment(palindromeChecked, [],smallIgnores)
-    fullContigJoin=group.joinSuperScaffolds(joinedSegments,[])
-    if fullContigJoin != []:
-        if fullContigJoin.getContigs() == []:
-            fullContigJoin.contigs.append(contig)
-        superScaffolds.append(fullContigJoin) 
-fullGroupJoin=group.joinSuperScaffolds(superScaffolds,[])
-if fullGroupJoin != []:
-    fullGroupJoin.alignWithBestScaf()
+#superScaffolds=[]
+#for contig in group.getContigList():
+#    segments=[]
+#    smallIgnores=[]
+#    for seg in contig.getCombinedSegments():
+#        if seg.getLength() < 1000:
+#            smallIgnores.append(copy.copy(seg))
+#        else:
+#            segments.append(copy.copy(seg))
+#    orderedSegs=group.orderSegs(segments)
+#    palindromeChecked=group.checkPalindrome(orderedSegs)
+#    joinedSegments=group.joinEachSegment(palindromeChecked, [],smallIgnores)
+#    fullContigJoin=group.joinSuperScaffolds(joinedSegments,[])
+#    if fullContigJoin != []:
+#        if fullContigJoin.getContigs() == []:
+#            fullContigJoin.contigs.append(contig)
+#        superScaffolds.append(fullContigJoin) 
+#fullGroupJoin=group.joinSuperScaffolds(superScaffolds,[])
+#if fullGroupJoin != []:
+#    fullGroupJoin.alignWithBestScaf()
    
                
                       
