@@ -27,9 +27,21 @@ class SuperSegment(object):
         self.segIgnores=[]
         self.unusedScaffolds=[]
     def getContigs(self):
-        return self.contigs
+        unique=[]
+        uniqueNames=[]
+        for contig in self.contigs:
+            if contig.getName() not in uniqueNames:
+                unique.append(contig)
+                uniqueNames.append(contig.getName())
+        return unique
     def getScaffolds(self):
-        return self.scaffolds
+        unique=[]
+        uniqueNames=[]
+        for scaffold in self.scaffolds:
+            if scaffold.getName() not in uniqueNames:
+                unique.append(scaffold)
+                uniqueNames.append(scaffold.getName())
+        return unique
     def getPartsInOrder(self):
         return self.partsInOrder
     def getEnveloped(self):

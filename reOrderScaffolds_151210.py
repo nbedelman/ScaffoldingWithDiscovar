@@ -125,11 +125,100 @@ for chromosome in chromosomes:
     chromosome.combineGroups("first")
     chromosome.writeResults()
 #
-#for chromosome in chromosomes:
-#    if chromosome.getName() == "Hmel203":
-#         Hmel203 = chromosome
-#for item in Hmel203.getGroups():
-#    scafList=[scaf.getName() for scaf in item.getScaffoldList()]
-#    if "Hmel203048" in scafList:
-#         group=item
-
+for chromosome in chromosomes:
+    if chromosome.getName() == "Hmel201":
+         Hmel201 = chromosome
+for item in Hmel201.getGroups():
+    scafList=[scaf.getName() for scaf in item.getScaffoldList()]
+    if "Hmel201019" in scafList:
+         group=item
+#
+#if joinedSupers == [] and len(superScaffolds) > 0:
+#            joinedSupers=superScaffolds[0]
+#            return self.joinSuperScaffolds(superScaffolds[1:],joinedSupers)
+#elif len(superScaffolds) == 0:
+#    return joinedSupers
+#else:
+#    notJoined=[]
+#    for index in range(len(superScaffolds)):
+#        toJoin=superScaffolds[index]
+#        if toJoin.isOverlapping(joinedSupers):
+#            if toJoin.hasNewInfo(joinedSupers):
+#                joinedSuperScafs=joinedSupers.getUsedScaffolds()
+#                joinedSuperContigs=joinedSupers.getContigs()
+#                
+#                overlappingPart=toJoin.getFirstOverlap(joinedSupers)
+#                toJoin.makePositive(overlappingPart)
+#                joinedSupers.makePositive(overlappingPart)
+#                supers=[joinedSupers,toJoin]
+#                
+#                joinedSupersStart=joinedSupers.lengthBefore(overlappingPart)
+#                toJoinStart=toJoin.lengthBefore(overlappingPart)
+#                distFromStart=[joinedSupersStart,toJoinStart]
+#                
+#                joinedSupersEnd=joinedSupers.lengthAfter(overlappingPart)
+#                toJoinEnd=toJoin.lengthAfter(overlappingPart)                        
+#                distFromEnd=[joinedSupersEnd,toJoinEnd]
+#                
+#                furthestFromStart=distFromStart.index(max(distFromStart))
+#                startSuper=supers[furthestFromStart]
+#                
+#                furthestFromEnd=distFromEnd.index(max(distFromEnd))
+#                endSuper=supers[furthestFromEnd]
+#                
+#                startOverlappingIndex=startSuper.getOverlappingIndices(overlappingPart)[0]
+#                endOverlappingIndex=endSuper.getOverlappingIndices(overlappingPart)[0]
+#                
+#                newStart=[]
+#                for part in range(len(startSuper.getPartsInOrder()[:startOverlappingIndex])):
+#                    newStart.append(startSuper.getPartsInOrder()[part].exportPart())
+#                    
+#                newEnd=[]
+#                try:
+#                    for part in range(endOverlappingIndex+1, len(endSuper.getPartsInOrder())):
+#                        newEnd.append(endSuper.getPartsInOrder()[part].exportPart())
+#                except IndexError:
+#                    newEnd=[]
+#                
+#                
+#                startOverlapPart=startSuper.getPartsInOrder()[startOverlappingIndex]
+#                endOverlapPart=endSuper.getPartsInOrder()[endOverlappingIndex]
+#                overlapBackbone=startOverlapPart.getBackbone()
+#                
+#                newOverlapPart=[(overlapBackbone,max(startOverlapPart.getStart(), endOverlapPart.getStart()), min(startOverlapPart.getEnd(), endOverlapPart.getEnd()),'+'),]
+#                joinedSupers=newStart+newOverlapPart+newEnd
+#                joinedSupers=self.checkNegatives(joinedSupers)
+#                joinedSupers = SuperSegment(joinedSupers)
+#                if toJoin.getContigs() != []:
+#                    joinedSupers.contigs.append(toJoin.contigs[0])
+#                joinedSupers.contigs+=joinedSuperContigs
+#                joinedSupers.usedScaffolds+=toJoin.getUsedScaffolds()
+#                joinedSupers.usedScaffolds+=joinedSuperScafs
+#                
+#                try:
+#                    unjoined=notJoined+superScaffolds[index+1:]
+#                except IndexError:
+#                    unjoined=notJoined
+#                return self.joinSuperScaffolds(unjoined, joinedSupers)
+#            else:
+#                if toJoin.getContigs() != []:
+#                    joinedSupers.contigs.append(toJoin.contigs[0])
+#                joinedSupers.usedScaffolds+=toJoin.getUsedScaffolds()
+#                try:
+#                    unjoined=notJoined+superScaffolds[index+1:]
+#                except IndexError:
+#                    unjoined=notJoined
+#                return self.joinSuperScaffolds(unjoined, joinedSupers) 
+#        else:
+#            notJoined.append(superScaffolds[index]) 
+##If there are superScaffolds that could not be joined, it's because we have something like
+##scaffolds 1 and 2 both were placed inside 3, and the superScaffold that links 1 and 2 together
+##therefore doesn't overlap with the big combined one
+#for supScaf in notJoined:
+#    if supScaf.getContigs() != []:
+#        joinedSupers.contigs.append(supScaf.getContigs()[0])
+#    joinIgnores=[seg.getOverlap()[0].getName() for seg in joinedSupers.getTrueIgnores()]
+#    for used in supScaf.getUsedScaffolds():
+#        if used.getName() not in joinIgnores:
+#            joinedSupers.usedScaffolds.append(used)
+#return joinedSupers   
