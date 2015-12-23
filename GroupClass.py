@@ -42,6 +42,7 @@ class Group(object):
             
     def makeSuperScaffolds(self):
         superScaffolds=[]
+        hiddenIgnores=[]
         for contig in self.getContigList():
             segments=[]
             smallIgnores=[]
@@ -53,16 +54,24 @@ class Group(object):
             orderedSegs=self.orderSegs(segments)
             palindromeChecked=self.checkPalindrome(orderedSegs)
             joinedSegments=self.joinEachSegment(palindromeChecked, [],smallIgnores)
-            fullContigJoin=self.joinSuperScaffolds(joinedSegments,[])
+            joinedSegs=joinedSegments[0]
+            ignoredSegs=joinedSegments[1]
+            if joinedSegs==[]:
+                hiddenIgnores+=ignoredSegs
+            fullContigJoin=self.joinSuperScaffolds(joinedSegs,[])
             if fullContigJoin != []:
                 if fullContigJoin.getContigs() == []:
                     fullContigJoin.contigs.append(contig)
                 self.superScaffolds.append(fullContigJoin)
                 superScaffolds.append(fullContigJoin)
-        fullGroupJoin=self.joinSuperScaffolds(superScaffolds,[])
-        if fullGroupJoin != []:
-            fullGroupJoin.alignWithBestScaf()
+        toOrder=[(sup, sup.getTotalLength) for sup in superScaffolds]
+        ordered=sorted(toOrder, key=itemgetter(1))
+        orderedSupers=[sup[0] for sup in ordered]
+        fullGroupJoin=self.joinSuperScaffolds(orderedSupers,[])
         self.fullGroupJoin=fullGroupJoin
+        if self.fullGroupJoin != []:
+            self.fullGroupJoin.alignWithBestScaf()
+            self.fullGroupJoin.segIgnores+=hiddenIgnores
         
         
     def joinSuperScaffolds(self, superScaffolds, joinedSupers):
@@ -187,7 +196,7 @@ class Group(object):
             if  joinedSegments != []:
                 for joined in joinedSegments:
                     joined.segIgnores+=ignoredSegs
-            return joinedSegments
+            return (joinedSegments,ignoredSegs)
         else:
             updatedJoinedSegments=joinedSegments
             joinIndexOne=0

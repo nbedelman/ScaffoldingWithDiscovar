@@ -50,7 +50,7 @@ class SuperSegment(object):
         ignores=[]
         usedNames=[scaf.getName() for scaf in self.getUsedScaffolds()]
         for ignore in self.getSegIgnores():
-            if ignore.getName() not in usedNames:
+            if ignore.getOverlap()[0].getName() not in usedNames:
                 ignores.append(ignore)
         return ignores
             

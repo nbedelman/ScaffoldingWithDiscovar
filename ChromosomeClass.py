@@ -113,7 +113,7 @@ class Chromosome(object):
         env=open(self.getName()+"envelopers.txt","w")
         groupCount=0
         for superScaf in self.getSuperScaffolds():
-            #f.write("GROUP NUMBER: " + str(groupCount) + "\n")
+            f.write("GROUP NUMBER: " + str(groupCount) + "\n")
             f.write(superScaf.printSuperSeg())
             groupCount+=1
         for group in self.getGroups():

@@ -124,19 +124,17 @@ for chromosome in chromosomes:
     print chromosome.getName()
     chromosome.combineGroups("first")
     chromosome.writeResults()
+##
 #
-
-# for chromosome in chromosomes:
-#     if chromosome.getName() == "Hmel204":
+#for chromosome in chromosomes:
+#    if chromosome.getName() == "Hmel204":
 #         Hmel204 = chromosome
-# for item in Hmel203.getGroups():
-#     scafList=[scaf.getName() for scaf in item.getScaffoldList()]
-#     if "Hmel204013" in scafList:
+#for item in Hmel204.getGroups():
+#    scafList=[scaf.getName() for scaf in item.getScaffoldList()]
+#    if "Hmel204009" in scafList:
 #         group=item
 
-#superScaffolds=[]
-#contig=group.getContigList()[0]
-#
+
 #segments=[]
 #smallIgnores=[]
 #for seg in contig.getCombinedSegments():
@@ -146,8 +144,19 @@ for chromosome in chromosomes:
 #        segments.append(copy.copy(seg))
 #orderedSegs=group.orderSegs(segments)
 #palindromeChecked=group.checkPalindrome(orderedSegs)
-#
-#
+#joinedSegments=group.joinEachSegment(palindromeChecked, [],smallIgnores)
+#joinedSegs=joinedSegments[0]
+#ignoredSegs=joinedSegments[1]
+#if joinedSegs==[]:
+#    hiddenIgnores+=ignoredSegs
+#fullContigJoin=group.joinSuperScaffolds(joinedSegs,[])
+#if fullContigJoin != []:
+#    if fullContigJoin.getContigs() == []:
+#        fullContigJoin.contigs.append(contig)
+#    group.superScaffolds.append(fullContigJoin)
+#    superScaffolds.append(fullContigJoin)
+
+##
 #segmentList=palindromeChecked
 #joinedSegments=[]
 #ignoredSegs=[]
