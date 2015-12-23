@@ -33,11 +33,17 @@ class Group(object):
         return output
     def printGroupEnvelopers(self):
         output=''
-        for key in self.getFullGroupJoin().getEnveloperDict():
-            scafs = ''
-            for scaffold in self.getFullGroupJoin().getEnveloperDict()[key]:
-                scafs += "%s, " % (scaffold)
-            output+="%s : %s\n" % (key, scafs)
+        envelopeDict= self.getFullGroupJoin().getEnveloperDict()
+        for key in envelopeDict:
+            ground=key
+            allEnveloped=envelopeDict[key][0]
+            enveloped=''
+            for env in allEnveloped:
+                enveloped+=str(env)
+            pairs=''
+            for scaffold in envelopeDict[key][1:]:
+                pairs += "(%s, %s)" % (scaffold[0],scaffold[1])
+            output+="%s : %s (%s)\n" % (ground, enveloped,pairs)
         return output
             
     def makeSuperScaffolds(self):
@@ -64,14 +70,20 @@ class Group(object):
                     fullContigJoin.contigs.append(contig)
                 self.superScaffolds.append(fullContigJoin)
                 superScaffolds.append(fullContigJoin)
-        toOrder=[(sup, sup.getTotalLength) for sup in superScaffolds]
-        ordered=sorted(toOrder, key=itemgetter(1))
+        toOrder=[(sup, sup.getTotalLength()) for sup in superScaffolds]
+        ordered=sorted(toOrder, key=itemgetter(1), reverse=True)
         orderedSupers=[sup[0] for sup in ordered]
         fullGroupJoin=self.joinSuperScaffolds(orderedSupers,[])
         self.fullGroupJoin=fullGroupJoin
         if self.fullGroupJoin != []:
+            usedScafs=[scaf.getName() for scaf in self.fullGroupJoin.getUsedScaffolds()]
+            unusedScafs=[]
+            for scaf in self.getScaffoldList():
+                if scaf.getName() not in usedScafs:
+                    unusedScafs.append(scaf)
             self.fullGroupJoin.alignWithBestScaf()
             self.fullGroupJoin.segIgnores+=hiddenIgnores
+            self.fullGroupJoin.unusedScaffolds+=unusedScafs
         
         
     def joinSuperScaffolds(self, superScaffolds, joinedSupers):

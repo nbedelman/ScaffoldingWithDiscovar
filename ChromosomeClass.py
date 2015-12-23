@@ -88,12 +88,15 @@ class Chromosome(object):
         for group in self.getGroups():
             if group.getFullGroupJoin() != []:
                 allSuperScafs.append(group.getFullGroupJoin())
-                if group.getFullGroupJoin().getTrueIgnores() != []:
+                if group.getFullGroupJoin().getTrueIgnores() != [] or group.getFullGroupJoin().getUnusedScaffolds() != []:
                     unGroupedNames=[scaf.getName() for scaf in self.getUngroupedScaffolds()]
-                    for ignore in group.getFullGroupJoin().getTrueIgnores():
-                        if ignore.getOverlap()[0].getName() not in unGroupedNames:
-                            self.unGroupedScaffolds.append(ignore.getOverlap()[0])
-                            unGroupedNames.append(ignore.getOverlap()[0].getName())
+                    allUnused=[ignore.getOverlap()[0] for ignore in group.getFullGroupJoin().getTrueIgnores()] + \
+                                group.getFullGroupJoin().getUnusedScaffolds()
+                    for ignore in allUnused:
+                        if ignore.getName() not in unGroupedNames:
+                            self.unGroupedScaffolds.append(ignore)
+                            unGroupedNames.append(ignore.getName())
+
             else:
                 for scaffold in group.getScaffoldList():
                     self.unGroupedScaffolds.append(scaffold)
@@ -118,7 +121,33 @@ class Chromosome(object):
             groupCount+=1
         for group in self.getGroups():
             fullJoin=group.getFullGroupJoin()
-            if fullJoin:
+            if fullJoin !=[]:
                 env.write(group.printGroupEnvelopers())
         f.close
         env.close
+        
+#        
+#allSuperScafs=[]
+#for group in chromosome.getGroups():
+#    if group.getFullGroupJoin() != []:
+#        allSuperScafs.append(group.getFullGroupJoin())
+#        if group.getFullGroupJoin().getTrueIgnores() != [] or group.getFullGroupJoin().getUnusedScaffolds() != []:
+#            unGroupedNames=[scaf.getName() for scaf in chromosome.getUngroupedScaffolds()]
+#            allUnused=[ignore.getOverlap()[0] for ignore in group.getFullGroupJoin().getTrueIgnores()] + \
+#                        group.getFullGroupJoin().getUnusedScaffolds()
+#            for ignore in allUnused:
+#                if ignore.getName() not in unGroupedNames:
+#                    chromosome.unGroupedScaffolds.append(ignore)
+#                    unGroupedNames.append(ignore.getName())
+#
+#    else:
+#        for scaffold in group.getScaffoldList():
+#            chromosome.unGroupedScaffolds.append(scaffold)
+#for scaffold in chromosome.getUngroupedScaffolds():
+#    superScaf=SuperSegment([(scaffold,1,scaffold.getLength(),scaffold.getStrand()),])
+#    allSuperScafs.append(superScaf)
+#sortable=[]
+#for superScaf in allSuperScafs:
+#    sortable.append((superScaf, superScaf.getFirstCoordinate("first")))
+#sortable=sorted(sortable, key=itemgetter(1))
+#onlyScafs=[sup[0] for sup in sortable]

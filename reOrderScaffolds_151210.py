@@ -124,88 +124,12 @@ for chromosome in chromosomes:
     print chromosome.getName()
     chromosome.combineGroups("first")
     chromosome.writeResults()
-##
 #
 #for chromosome in chromosomes:
-#    if chromosome.getName() == "Hmel204":
-#         Hmel204 = chromosome
-#for item in Hmel204.getGroups():
+#    if chromosome.getName() == "Hmel203":
+#         Hmel203 = chromosome
+#for item in Hmel203.getGroups():
 #    scafList=[scaf.getName() for scaf in item.getScaffoldList()]
-#    if "Hmel204009" in scafList:
+#    if "Hmel203048" in scafList:
 #         group=item
 
-
-#segments=[]
-#smallIgnores=[]
-#for seg in contig.getCombinedSegments():
-#    if seg.getLength() < 1000:
-#        smallIgnores.append(copy.copy(seg))
-#    else:
-#        segments.append(copy.copy(seg))
-#orderedSegs=group.orderSegs(segments)
-#palindromeChecked=group.checkPalindrome(orderedSegs)
-#joinedSegments=group.joinEachSegment(palindromeChecked, [],smallIgnores)
-#joinedSegs=joinedSegments[0]
-#ignoredSegs=joinedSegments[1]
-#if joinedSegs==[]:
-#    hiddenIgnores+=ignoredSegs
-#fullContigJoin=group.joinSuperScaffolds(joinedSegs,[])
-#if fullContigJoin != []:
-#    if fullContigJoin.getContigs() == []:
-#        fullContigJoin.contigs.append(contig)
-#    group.superScaffolds.append(fullContigJoin)
-#    superScaffolds.append(fullContigJoin)
-
-##
-#segmentList=palindromeChecked
-#joinedSegments=[]
-#ignoredSegs=[]
-#
-#joinedSegments=group.joinEachSegment(palindromeChecked, [],smallIgnores)
-#fullContigJoin=group.joinSuperScaffolds(joinedSegments,[])
-#if fullContigJoin != []:
-#    if fullContigJoin.getContigs() == []:
-#        fullContigJoin.contigs.append(contig)
-#    superScaffolds.append(fullContigJoin)
-        
-
-#superScaffolds=[]
-#for contig in group.getContigList():
-#    segments=[]
-#    smallIgnores=[]
-#    for seg in contig.getCombinedSegments():
-#        if seg.getLength() < 1000:
-#            smallIgnores.append(copy.copy(seg))
-#        else:
-#            segments.append(copy.copy(seg))
-#    orderedSegs=group.orderSegs(segments)
-#    palindromeChecked=group.checkPalindrome(orderedSegs)
-#    joinedSegments=group.joinEachSegment(palindromeChecked, [],smallIgnores)
-#    fullContigJoin=group.joinSuperScaffolds(joinedSegments,[])
-#    if fullContigJoin != []:
-#        if fullContigJoin.getContigs() == []:
-#            fullContigJoin.contigs.append(contig)
-#        superScaffolds.append(fullContigJoin) 
-#fullGroupJoin=group.joinSuperScaffolds(superScaffolds,[])
-#if fullGroupJoin != []:
-#    fullGroupJoin.alignWithBestScaf()
-
-   
-               
-                      
-                             
-                                           
-                
-#joinedSupers=[]                       
-#notJoined=[]                                        
-#index=0
-#toJoin=superScaffolds[index]        
-#notJoined.append(superScaffolds[index])           
-#              
-        
-#        
-#fullGroupJoin=self.joinSuperScaffolds(superScaffolds,[])
-#if fullGroupJoin != []:
-#    fullGroupJoin.alignWithBestScaf()
-#    fullGroupJoin.segIgnores=trueIgnores
-#self.fullGroupJoin=fullGroupJoin

@@ -25,6 +25,7 @@ class SuperSegment(object):
         self.enveloped=[]
         self.usedScaffolds=[]
         self.segIgnores=[]
+        self.unusedScaffolds=[]
     def getContigs(self):
         return self.contigs
     def getScaffolds(self):
@@ -46,6 +47,14 @@ class SuperSegment(object):
         return unique
     def getSegIgnores(self):
         return self.segIgnores
+    def getUnusedScaffolds(self):
+        unused=[]
+        unusedNames=[]
+        for scaf in self.unusedScaffolds:
+            if scaf.getName() not in unusedNames:
+                unused.append(scaf)
+                unusedNames.append(scaf.getName())
+        return self.unusedScaffolds
     def getTrueIgnores(self):
         ignores=[]
         usedNames=[scaf.getName() for scaf in self.getUsedScaffolds()]
@@ -84,18 +93,16 @@ class SuperSegment(object):
         return sum(lengths)
     
     def getFirstCoordinate(self, base):
-        if base == "first":
-            for part in self.getPartsInOrder():
-                if part.getType() == Scaffold and part.getBackbone().getChrom() != "Hmel200": #THIS PART IS BOT GENERAL
-                    return part.getBackbone().getStart()
-        elif base == "best":
-            sortParts=[]
-            for part in range(len(self.getPartsInOrder())):
-                if self.getPartsInOrder()[part].getType() == Scaffold:
-                    sortParts.append((part, self.getPartsInOrder()[part].getScore(), self.getPartsInOrder()[part].getBackboneLength()))
+        sortParts=[]
+        for part in range(len(self.getPartsInOrder())):
+            if self.getPartsInOrder()[part].getType() == Scaffold:
+                sortParts.append((self.getPartsInOrder()[part], self.getPartsInOrder()[part].getScore(), self.getPartsInOrder()[part].getBackboneLength()))
+        if base =="first":
+            sortParts = sorted(sortParts, key=itemgetter(2), reverse=True)
+        elif base=="best":
             sortParts = sorted(sortParts, key=itemgetter(1,2), reverse=True)
-            best = sortParts[0][0]
-            return best.getBackbone().getStart()
+        out = sortParts[0][0]
+        return out.getBackbone().getStart()
     def isOverlapping(self, otherSuperSegment):
         overlaps=False
         for part in self.getPartsInOrder():
@@ -162,8 +169,8 @@ class SuperSegment(object):
         in this superSegment.'''
         inFinal=[]
         unUsed=[]
-        matched={}
-        ignored=[ignore.getName() for ignore in self.getTrueIgnores()]
+        unMatched=[]
+        ignored=[ignore.getOverlap()[0].getName() for ignore in self.getTrueIgnores()]
         for part in self.getPartsInOrder():
             if part.getType() == Scaffold:
                 inFinal.append(part.getBackbone().getName())
@@ -180,11 +187,48 @@ class SuperSegment(object):
                 elif connect.getName() in inFinal:
                     present.append(connect.getName())
             if missing != []:
-                matched[contig.getName()] = (present,missing)
+                unMatched.append((present,contig.getName(),missing))
+                
+        matched=self.findMatchingEnvelopes(unMatched, {}, 0)        
         self.enveloped=unUsed
         self.envelopers=matched
          
                 
+    def findMatchingEnvelopes(self, unMatchedList, matchDict, loopCount):
+        unGrounded=[]
+        matches=copy.copy(matchDict)
+        for item in unMatchedList:
+            if item[0] != []:
+                ground=item[0][0]
+                contig=item[1]
+                envelopes=item[2]
+                try:
+                    matches[ground].append((contig,envelopes))
+                    matches[ground][0]+=envelopes
+                except KeyError:
+                    matches[ground]=[envelopes,(contig,envelopes)]
+            else:
+                unGrounded.append(item)
+        stillUnMatched=[]
+        for floating in unGrounded:
+            contig=floating[1]
+            envelopes=floating[2]
+            matched=False
+            for key in matches.keys():
+                contained=matches[key][0]
+                for env in envelopes:
+                    if env in contained:
+                        matched=True
+                        matches[key][0]+=envelopes
+                        matches[key].append((contig,envelopes))
+            if not matched:
+                stillUnMatched.append(floating)
+        if stillUnMatched != [] and loopCount<10:
+            loopCount+=1
+            return self.findMatchingEnvelopes(stillUnMatched, matches, loopCount)
+        else:
+            return matches
+                        
         
     
     def hasNewInfo(self, otherSuper):
@@ -197,6 +241,43 @@ class SuperSegment(object):
                 unique=True
         return unique
         
-        
-                    
-                    
+#        
+#
+#matched=self.findMatchingEnvelopes(unMatched, {}, 0)        
+#self.enveloped=unUsed
+#self.envelopers=matched
+#                        
+#unGrounded=[]
+#matches=copy.copy(matchDict)
+#unMatched=copy.copy(unMatchedList)
+#for item in unMatched:
+#    if item[0] != []:
+#        ground=item[0][0]
+#        contig=item[1]
+#        envelopes=item[2]
+#        try:
+#            matches[ground].append((contig,envelopes))
+#            matches[ground][0]+=envelopes
+#        except KeyError:
+#            matches[ground]=[envelopes,(contig,envelopes)]
+#    else:
+#        unGrounded.append(item)
+#stillUnMatched=[]
+#for floating in unGrounded:
+#    contig=item[1]
+#    envelopes=item[2]
+#    matched=False
+#    for key in matches.keys():
+#        contained=matches[key][0]
+#        for env in envelopes:
+#            if env in contained:
+#                matched=True
+#                matches[key][0]+=envelopes
+#                matches[key].append((contig,envelopes))
+#    if not matched:
+#        stillUnMatched.append(floating)
+#if stillUnMatched != [] and loopCount<10:
+#    loopCount+=1
+#    return self.findMatchingEnvelopes(stillUnMatched, matches, loopCount)
+#else:
+#    return matches                    
