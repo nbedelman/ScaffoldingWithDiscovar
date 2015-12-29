@@ -13,11 +13,13 @@ from PartClass import *
 from ErrorClasses import *
 
 class Group(object):
-    def __init__(self, contigList, scaffoldList):
+    def __init__(self, contigList, scaffoldList, chromosome):
         self.contigList=contigList
         self.scaffoldList=scaffoldList
         self.superScaffolds=[]
         self.fullGroupJoin=[]
+        self.chromosome=chromosome
+        self.inversions=[]
     def getContigList(self):
         return self.contigList
     def getScaffoldList(self):
@@ -39,7 +41,7 @@ class Group(object):
             allEnveloped=envelopeDict[key][0]
             enveloped=''
             for env in allEnveloped:
-                enveloped+=str(env)
+                enveloped+= '''%s, ''' % (str(env))
             pairs=''
             for scaffold in envelopeDict[key][1:]:
                 pairs += "(%s, %s)" % (scaffold[0],scaffold[1])
@@ -50,26 +52,18 @@ class Group(object):
         superScaffolds=[]
         hiddenIgnores=[]
         for contig in self.getContigList():
-            segments=[]
-            smallIgnores=[]
-            for seg in contig.getCombinedSegments():
-                if seg.getLength() < 1000:
-                    smallIgnores.append(copy.copy(seg))
-                else:
-                    segments.append(copy.copy(seg))
-            orderedSegs=self.orderSegs(segments)
-            palindromeChecked=self.checkPalindrome(orderedSegs)
-            joinedSegments=self.joinEachSegment(palindromeChecked, [],smallIgnores)
-            joinedSegs=joinedSegments[0]
-            ignoredSegs=joinedSegments[1]
-            if joinedSegs==[]:
-                hiddenIgnores+=ignoredSegs
-            fullContigJoin=self.joinSuperScaffolds(joinedSegs,[])
-            if fullContigJoin != []:
-                if fullContigJoin.getContigs() == []:
-                    fullContigJoin.contigs.append(contig)
-                self.superScaffolds.append(fullContigJoin)
-                superScaffolds.append(fullContigJoin)
+            try:
+                fullContigJoin = self.joinFullContig(contig)
+                contigJoin = fullContigJoin[0]
+                contigIgnores = fullContigJoin [1]
+                hiddenIgnores+=contigIgnores
+                if contigJoin != []:
+                    if contigJoin.getContigs() == []:
+                        contigJoin.contigs.append(contig)
+                    self.superScaffolds.append(contigJoin)
+                    superScaffolds.append(contigJoin)
+            except InversionError:
+                self.inversions.append(contig)
         toOrder=[(sup, sup.getTotalLength()) for sup in superScaffolds]
         ordered=sorted(toOrder, key=itemgetter(1), reverse=True)
         orderedSupers=[sup[0] for sup in ordered]
@@ -84,6 +78,32 @@ class Group(object):
             self.fullGroupJoin.alignWithBestScaf()
             self.fullGroupJoin.segIgnores+=hiddenIgnores
             self.fullGroupJoin.unusedScaffolds+=unusedScafs
+        
+    def joinFullContig(self,contig):
+        segments=[]
+        smallIgnores=[]
+        hiddenIgnores=[]
+        for seg in contig.getCombinedSegments():
+            if seg.getLength() < 1000:
+                smallIgnores.append(copy.copy(seg))
+            else:
+                segments.append(copy.copy(seg))
+        orderedSegs=self.orderSegs(segments)
+        palindromeChecked=self.checkPalindrome(orderedSegs)
+        if palindromeChecked != orderedSegs:
+            hiddenIgnores+=palindromeChecked
+            return [], hiddenIgnores
+        else:
+            try:
+                joinedSegments=self.joinEachSegment(palindromeChecked, [],smallIgnores)
+                joinedSegs=joinedSegments[0]
+                ignoredSegs=joinedSegments[1]
+                if joinedSegs==[]:
+                    hiddenIgnores+=ignoredSegs
+                fullJoin=self.joinSuperScaffolds(joinedSegs,[])
+                return fullJoin, hiddenIgnores
+            except InversionError:
+                raise
         
         
     def joinSuperScaffolds(self, superScaffolds, joinedSupers):
@@ -101,18 +121,13 @@ class Group(object):
                         joinedSuperScafs=joinedSupers.getUsedScaffolds()
                         joinedSuperContigs=joinedSupers.getContigs()
                         
-                        overlappingPart=toJoin.getFirstOverlap(joinedSupers)
-                        toJoin.makePositive(overlappingPart)
-                        joinedSupers.makePositive(overlappingPart)
-                        supers=[joinedSupers,toJoin]
+                        supers=self.alignDirections(joinedSupers, toJoin)
                         
-                        joinedSupersStart=joinedSupers.lengthBefore(overlappingPart)
-                        toJoinStart=toJoin.lengthBefore(overlappingPart)
-                        distFromStart=[joinedSupersStart,toJoinStart]
+                        overlappingPart=joinedSupers.getFirstOverlap(toJoin, partType=Scaffold)
+                        distFromStart=[joinedSupers.lengthBefore(overlappingPart),toJoin.lengthBefore(overlappingPart)]
                         
-                        joinedSupersEnd=joinedSupers.lengthAfter(overlappingPart)
-                        toJoinEnd=toJoin.lengthAfter(overlappingPart)                        
-                        distFromEnd=[joinedSupersEnd,toJoinEnd]
+                   
+                        distFromEnd=[joinedSupers.lengthAfter(overlappingPart),toJoin.lengthAfter(overlappingPart)]
                         
                         furthestFromStart=distFromStart.index(max(distFromStart))
                         startSuper=supers[furthestFromStart]
@@ -154,6 +169,8 @@ class Group(object):
                         except IndexError:
                             unjoined=notJoined
                         return self.joinSuperScaffolds(unjoined, joinedSupers)
+                    #elif toJoin.joinsInside(joinedSupers):
+                    #    
                     else:
                         if toJoin.getContigs() != []:
                             joinedSupers.contigs.append(toJoin.contigs[0])
@@ -165,34 +182,92 @@ class Group(object):
                         return self.joinSuperScaffolds(unjoined, joinedSupers) 
                 else:
                     notJoined.append(superScaffolds[index]) 
-        #If there are superScaffolds that could not be joined, it's because we have something like
-        #scaffolds 1 and 2 both were placed inside 3, and the superScaffold that links 1 and 2 together
-        #therefore doesn't overlap with the big combined one
-        for supScaf in notJoined:
-            if supScaf.getContigs() != []:
-                joinedSupers.contigs.append(supScaf.getContigs()[0])
-            joinIgnores=[seg.getOverlap()[0].getName() for seg in joinedSupers.getTrueIgnores()]
-            for used in supScaf.getUsedScaffolds():
-                if used.getName() not in joinIgnores:
-                    joinedSupers.usedScaffolds.append(used)
-        return joinedSupers   
+                
+            if notJoined != [] :
+                split=self.insideOrUnjoinable(joinedSupers, notJoined)
+                joinedSupers=split[0]
+                unJoinable=split[1]
+                if unJoinable != []:
+                    allContigs=[]
+                    allScaffolds=[]
+                    for unJoined in unJoinable:
+                        allContigs+=unJoined.getContigs()
+                        allScaffolds+=unJoined.getUsedScaffolds()
+                    newGroup = Group(allContigs, allScaffolds, self.chromosome)
+                    self.chromosome.groups.append(newGroup)
+                    for contig in allContigs:
+                        for groupCon in self.getContigList():
+                            if contig.getName() == groupCon.getName():
+                                self.contigList.remove(groupCon)
+                    for scaffold in allScaffolds:
+                        for groupScaf in self.getScaffoldList():
+                            if scaffold.getName() == groupScaf.getName():
+                                self.scaffoldList.remove(groupScaf)
+            return joinedSupers  
+                 
+                  
+    def insideOrUnjoinable(self,joinedSupers, notJoinedList):
+        alreadyJoined=copy.copy(joinedSupers)
+        candidateList=copy.copy(notJoinedList)
+        startNum=len(candidateList)
+        stillUnjoined=[]
+        
+        alreadyJoined.findEnvelopers()
+        allInvolved=alreadyJoined.getEnveloped()+[used.getName() for used in alreadyJoined.getUsedScaffolds()]
+        
+        for supScaf in candidateList:
+            reallyAbsent=True
+            supScaf.findEnvelopers()
+            allInUnjoined=supScaf.getEnveloped()+[used.getName() for used in supScaf.getUsedScaffolds()]
+            for outScaf in allInUnjoined:
+                for inScaf in allInvolved:
+                    if outScaf == inScaf:
+                        reallyAbsent=False
             
+            if not reallyAbsent:
+                superScafs=[alreadyJoined,supScaf]
+                sizes=[alreadyJoined.getTotalLength(), supScaf.getTotalLength()]
+                bigger=superScafs[sizes.index(max(sizes))]
+                smaller=superScafs[sizes.index(min(sizes))]
+                if smaller.getContigs() != []:
+                    bigger.contigs+=supScaf.getContigs()
+                joinIgnores=[seg.getOverlap()[0].getName() for seg in bigger.getTrueIgnores()]
+                for used in smaller.getUsedScaffolds():
+                    if used.getName() not in joinIgnores:
+                        bigger.usedScaffolds.append(used)
+                        allInvolved=bigger.getEnveloped()+[used.getName() for used in bigger.getUsedScaffolds()]
+                alreadyJoined=bigger
+            else:
+                stillUnjoined.append(supScaf)
+        if startNum == len(stillUnjoined):
+            return alreadyJoined, stillUnjoined
+        else:
+            return self.insideOrUnjoinable(alreadyJoined,stillUnjoined) 
+            
+    
+    def alignDirections(self, superSeg1, superSeg2):    
+        overlappingPart=superSeg1.getFirstOverlap(superSeg2)
+        superSeg1.makePositive(overlappingPart)
+        superSeg2.makePositive(overlappingPart)
+        supers=[superSeg1,superSeg2]     
+        return supers   
         
     def checkPalindrome(self,segmentList):
         tempInfo=[]
         dePalindromed=[]
         for segment in segmentList:
-            tempInfo.append((segment,segment.getScafStart(), segment.getScafEnd(), segment.getStrand()))
+            tempInfo.append((segment,segment.getOverlap()[0].getName(),segment.getScafStart(), segment.getScafEnd(), segment.getStrand()))
+            inOrder=sorted(tempInfo, key=itemgetter(1,2))
         for info in range(len(tempInfo)-1):
-            if tempInfo[info][1:2]==tempInfo[info+1][1:2]:
-                if tempInfo[info][3]=='+':
+            if inOrder[info][2:4]==inOrder[info+1][2:4]:
+                if tempInfo[info][4]=='+':
                     dePalindromed.append(tempInfo[info][0])
                 else:
                     dePalindromed.append(tempInfo[info+1][0])
         if len(dePalindromed)!=0:
             return dePalindromed
         else:
-            return segmentList
+            return segmentList  
             
     def orderSegs(self,segmentList):
         unordered=[]
@@ -216,40 +291,44 @@ class Group(object):
  
         try:
             joinThisTime=[segmentList[joinIndexOne],segmentList[joinIndexTwo]]
-            result=self.joinSegments(joinThisTime)
+            result=self.joinSegments(joinThisTime, "exclusive")
             if result:
+                result.inclusiveJoin=self.joinSegments(joinThisTime, "inclusive")
                 updatedJoinedSegments.append(result)
         except NestedSegsError:
             ignoredSegs+=[segmentList[joinIndexTwo]]
-            result=self.nestedSegBranch(segmentList,joinIndexTwo + 1, ignoredSegs)
+            result=self.nestedSegBranch(segmentList,joinIndexTwo + 1, ignoredSegs, "exclusive")
             if result[0]:
+                result[0].inclusiveJoin=self.nestedSegBranch(segmentList,joinIndexTwo + 1, ignoredSegs, "inclusive")[0]
                 updatedJoinedSegments.append(result[0])
             ignoredSegs+=result[2]
-            joinIndexTwo=result[1]   
+            joinIndexTwo=result[1] 
+        except InversionError:
+            raise  
         return self.joinEachSegment(segmentList[joinIndexTwo:], updatedJoinedSegments, ignoredSegs)
             
-    def nestedSegBranch(self,segmentList, indTwo, ignoredSegs):
+    def nestedSegBranch(self,segmentList, indTwo, ignoredSegs, joinType):
         #print "nestedSegBranch"
         try:
             joinThisTime=[segmentList[0],segmentList[indTwo]]
-            output=self.joinSegments(joinThisTime)
+            output=self.joinSegments(joinThisTime, joinType)
             return (output, indTwo, ignoredSegs)
         except NestedSegsError:
             ignoredSegs.append(segmentList[indTwo])
-            return self.nestedSegBranch(segmentList, indTwo+1, ignoredSegs)
+            return self.nestedSegBranch(segmentList, indTwo+1, ignoredSegs, joinType)
         except IndexError:
             return (None, indTwo, ignoredSegs)
     
     
-    def joinSegments(self,segmentPair):
+    def joinSegments(self,segmentPair, joinType):
         seg1=copy.copy(segmentPair[0])
         seg2=copy.copy(segmentPair[1])
-        if seg1.getStrand()==seg2.getStrand():
-            return self.sameDirectionBranch(seg1,seg2)
+        if seg1.getOriginalStrand()==seg2.getOriginalStrand():
+            return self.sameDirectionBranch(seg1,seg2, joinType)
         else:
-            return self.diffDirectionBranch(seg1,seg2)
+            return self.diffDirectionBranch(seg1,seg2, joinType)
     
-    def sameDirectionBranch(self, seg1,seg2):
+    def sameDirectionBranch(self, seg1,seg2, joinType):
         #print "sameDirectionBranch"
         if seg1.getOverlap()[0].getName() == seg2.getOverlap()[0].getName():
             output=[(seg1.getOverlap()[0], 1, seg1.getOverlap()[0].getLength(), seg1.getOverlap()[0].getStrand()),]
@@ -260,34 +339,36 @@ class Group(object):
             return output
                        
         else:
-            return self.differentScaffoldBranch(seg1,seg2)
+            return self.differentScaffoldBranch(seg1,seg2, joinType)
     
-    def diffDirectionBranch(self,seg1,seg2):
+    def diffDirectionBranch(self,seg1,seg2, joinType):
         #print "diffDirectionBranch"
+        if seg1.getOverlap()[0].getName() == seg2.getOverlap()[0].getName():
+            raise InversionError('''contig %s has a small inversion relative to the reference. please adjust manually.''' % (seg1.getContig().getName()))
         if seg1.getOverlap()[0].getScore() > seg2.getOverlap()[0].getScore():
             newSegTwo = copy.copy(seg2)
             newSegTwo.flipSegment()
-            return self.sameDirectionBranch(seg1, newSegTwo)
+            return self.sameDirectionBranch(seg1, newSegTwo, joinType)
         elif (seg1.getOverlap()[0].getScore() == seg2.getOverlap()[0].getScore()) and (seg1.getOverlap()[0].getLength() > seg2.getOverlap()[0].getLength()):
             newSegTwo = copy.copy(seg2)
             newSegTwo.flipSegment()
-            return self.sameDirectionBranch(seg1, newSegTwo)
+            return self.sameDirectionBranch(seg1, newSegTwo, joinType)
         else:
             newSegOne = copy.copy(seg1)
             newSegOne.flipSegment()
-            return self.sameDirectionBranch(newSegOne, seg2)
+            return self.sameDirectionBranch(newSegOne, seg2, joinType)
         
         
         
-    def differentScaffoldBranch(self,seg1,seg2):
+    def differentScaffoldBranch(self,seg1,seg2, joinType):
         #print "differentScaffoldBranch"
         if seg1.getConEnd() < seg2.getConEnd():
-            return self.diffScaffCombine(seg1,seg2) #was notNestedSegsBranch(seg1,seg2)
+            return self.diffScaffCombine(seg1,seg2, joinType) #was notNestedSegsBranch(seg1,seg2)
         else:
             #print "nestedSegs"
             raise NestedSegsError('''Contig %s has nested segments %s and %s''' % (seg1.getContig().getName(), seg1.getName(), seg2.getName()))
 
-    def diffScaffCombine(self,seg1,seg2):
+    def diffScaffCombine(self,seg1,seg2, joinType):
         distFromScafStart=[]
         distFromScafEnd=[]
         scaffolds=[copy.copy(seg1.getOverlap()[0]),copy.copy(seg2.getOverlap()[0])]
@@ -317,11 +398,15 @@ class Group(object):
             return  
         
         if startScaf.getName() == endScaf.getName():
+            if joinType == "exclusive":
                 output=[(startScaf, 1, startScaf.getLength(), startScaf.getStrand()),]
                 output=self.checkNegatives(output)
                 output=SuperSegment(output)
                 output.contigs.append(contig)
                 output.usedScaffolds+=[seg1.getOverlap()[0],seg2.getOverlap()[0]]
+            elif joinType == "inclusive":
+                output=self.inclusiveSegJoin(seg1,seg2, startScaf.getName())
+                output.contigs.append(contig)
                 
         else:
             endOfStartScafOverlap = min(startScaf.getLength()-distFromScafEnd[furthestFromStart], startScaf.getLength())
@@ -342,7 +427,26 @@ class Group(object):
             output.usedScaffolds+=[seg1.getOverlap()[0],seg2.getOverlap()[0]]
         return output
                     
-    
+    def inclusiveSegJoin(self,seg1,seg2,envelopingScafName):
+        if seg1.getStrand() =='-':
+            seg1.flipSegment()
+            seg2.flipSegment()
+        if seg1.getOverlap()[0].getName() == envelopingScafName:
+            enveloper=seg1.getOverlap()[0]
+            enveloped=seg2.getOverlap()[0]
+        elif seg2.getOverlap()[0].getName() == envelopingScafName:
+            enveloper=seg2.getOverlap()[0]
+            enveloped=seg1.getOverlap()[0]            
+        start=(enveloper,1,seg1.getScafEnd(), enveloper.getStrand())
+        middle = (enveloped,seg2.getScafStart(), seg2.getScafEnd(), enveloped.getStrand())
+        end = (enveloper,seg1.getScafEnd() + (seg2.getConEnd()-seg1.getConEnd()) ,enveloper.getLength(), seg1.getOverlap()[0].getStrand())
+        output=[start,middle,end]
+        output=self.checkNegatives(output)
+        output=SuperSegment(output)
+        return output
+        
+        
+        
     def distanceBetweenSegsChecks(self,seg1, seg2):
         #print "distanceBetweenSegsChecks"
         return seg1.getConEnd()-seg2.getConEnd() < 1000
