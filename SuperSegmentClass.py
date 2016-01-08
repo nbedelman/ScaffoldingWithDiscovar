@@ -26,7 +26,9 @@ class SuperSegment(object):
         self.usedScaffolds=[]
         self.segIgnores=[]
         self.unusedScaffolds=[]
+        self.inclusiveJoin=[]
     def getContigs(self):
+        '''return the list of unique contigs used by this superSegment'''
         unique=[]
         uniqueNames=[]
         for contig in self.contigs:
@@ -35,6 +37,7 @@ class SuperSegment(object):
                 uniqueNames.append(contig.getName())
         return unique
     def getScaffolds(self):
+        '''return the list of unique scaffolds used by this superSegment'''
         unique=[]
         uniqueNames=[]
         for scaffold in self.scaffolds:
@@ -44,6 +47,8 @@ class SuperSegment(object):
         return unique
     def getPartsInOrder(self):
         return self.partsInOrder
+    def getInclusiveJoin(self):
+        return self.inclusiveJoin
     def getEnveloped(self):
         return self.enveloped
     def getEnveloperDict(self):
@@ -124,11 +129,19 @@ class SuperSegment(object):
                     break
         return overlaps
         
-    def getFirstOverlap(self, otherSuperSegment):
+    def getFirstOverlap(self, otherSuperSegment, partType=None):
+        thisSuperParts=[]
+        otherSuperParts=[]
         for part in self.getPartsInOrder():
-            for otherPart in otherSuperSegment.getPartsInOrder():
-                if part.getName() == otherPart.getName():
-                    return part.getName()
+            if (not partType) or (part.getType()==partType):
+                thisSuperParts.append(part.getName())
+        for otherPart in otherSuperSegment.getPartsInOrder():
+            if (not partType) or (part.getType()==partType):
+                otherSuperParts.append(otherPart.getName())
+        for name in thisSuperParts:
+            for otherName in otherSuperParts:
+                if name== otherName:
+                    return name
     
     def getOverlappingIndices(self, overlapName):
         result=[]
@@ -144,7 +157,7 @@ class SuperSegment(object):
         length=0
         for part in range(len(self.getPartsInOrder()[:index])):
             length += self.getPartsInOrder()[part].getLength()
-        length+=self.getPartsInOrder()[index].getStart()
+        #length+=self.getPartsInOrder()[index].getStart()
         return length
     
     def lengthAfter(self, backboneName):
@@ -154,7 +167,7 @@ class SuperSegment(object):
         length=0
         for part in range(index+1,len(self.getPartsInOrder())):
             length += self.getPartsInOrder()[part].getLength()
-        length += (self.getPartsInOrder()[index].getBackboneLength() - self.getPartsInOrder()[index].getEnd())
+        #length += (self.getPartsInOrder()[index].getBackboneLength() - self.getPartsInOrder()[index].getEnd())
         return length        
         
     def makePositive(self, backboneName):
@@ -215,10 +228,10 @@ class SuperSegment(object):
                 contig=item[1]
                 envelopes=item[2]
                 try:
-                    matches[ground].append((contig,envelopes))
+                    matches[ground].append((contig,envelopes+[ground,]))
                     matches[ground][0]+=envelopes
                 except KeyError:
-                    matches[ground]=[envelopes,(contig,envelopes)]
+                    matches[ground]=[envelopes,(contig,envelopes+[ground,])]
             else:
                 unGrounded.append(item)
         stillUnMatched=[]
@@ -231,7 +244,9 @@ class SuperSegment(object):
                 for env in envelopes:
                     if env in contained:
                         matched=True
-                        matches[key][0]+=envelopes
+                        for scaf in envelopes:
+                            if scaf not in matches[key][0]:
+                                matches[key][0].append(scaf)
                         matches[key].append((contig,envelopes))
             if not matched:
                 stillUnMatched.append(floating)
@@ -253,43 +268,3 @@ class SuperSegment(object):
                 unique=True
         return unique
         
-#        
-#
-#matched=self.findMatchingEnvelopes(unMatched, {}, 0)        
-#self.enveloped=unUsed
-#self.envelopers=matched
-#                        
-#unGrounded=[]
-#matches=copy.copy(matchDict)
-#unMatched=copy.copy(unMatchedList)
-#for item in unMatched:
-#    if item[0] != []:
-#        ground=item[0][0]
-#        contig=item[1]
-#        envelopes=item[2]
-#        try:
-#            matches[ground].append((contig,envelopes))
-#            matches[ground][0]+=envelopes
-#        except KeyError:
-#            matches[ground]=[envelopes,(contig,envelopes)]
-#    else:
-#        unGrounded.append(item)
-#stillUnMatched=[]
-#for floating in unGrounded:
-#    contig=item[1]
-#    envelopes=item[2]
-#    matched=False
-#    for key in matches.keys():
-#        contained=matches[key][0]
-#        for env in envelopes:
-#            if env in contained:
-#                matched=True
-#                matches[key][0]+=envelopes
-#                matches[key].append((contig,envelopes))
-#    if not matched:
-#        stillUnMatched.append(floating)
-#if stillUnMatched != [] and loopCount<10:
-#    loopCount+=1
-#    return self.findMatchingEnvelopes(stillUnMatched, matches, loopCount)
-#else:
-#    return matches                    

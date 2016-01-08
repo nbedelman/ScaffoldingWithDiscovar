@@ -16,7 +16,21 @@ from GroupClass import *
 from ErrorClasses import *
 
 
-def runAll(bedDirectory, agpBedFile):
+def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMethod="first"):
+    '''runs the full program. 
+    Takes:
+        bedDirectory: a directory containing a bed file for each discovar contig's alignment to genome
+        agpBedFile: a bed file that gives information about where scaffolds are placed on the genome
+        originalGenome: a fasta file of the genome
+        discovarAssembly: a fasta file of the discovar assembly (a.lines.fasta)
+        combineMethod: either "first" or "best". used to place combined scaffolds onto chromosome, based either on  
+            where the earliest scaffold was originally mapped or where the best (anchored or largest) scaffold was originally mapped
+    Returns:
+        *coordinates.txt: text files with coordinated of combined scaffolds in form <SCAFFOLD,START,STOP,STRAND>
+        *envelopers.txt: text files with information about scaffolds that mapped inside others in form
+            ENVELOPING SCAF: <list of enveloped scafs> <list of "evidence" in form (DISCOVAR CONTIG, [SCAFFOLDS COMBINED BY CONTIG])>
+        *fixed.fasta: fasta file with the result of using discovar to join reference scaffolds
+    '''
     print "reading contigs"
     rawContigs=readAllContigs(bedDirectory)
     print "done"
@@ -39,15 +53,22 @@ def runAll(bedDirectory, agpBedFile):
     print "done"
     print "grouping within Chromosome and making super scaffolds"
     for chromosome in chromosomes:
+        print "writing output"
         print chromosome.getName()
         chromosome.makeAllGroups()
         for group in chromosome.getGroups():
             group.makeSuperScaffolds()
-    print "done"
+        chromosome.combineGroups(combineMethod)
+        chromosome.writeOverviewResults()
+        chromosome.writeFasta(originalGenome, discovarAssembly)
+        print "done"
+    print "COMPLETED"
     return chromosomes
     
 
 def readAllContigs(directory):
+    '''takes a directory with bed files of contig alignments
+    returns a list of Contig objects'''
     contigs=[]
     rootdir = directory
     for subdir, dirs, files in os.walk(rootdir):
@@ -56,11 +77,13 @@ def readAllContigs(directory):
     return contigs
     
 def cullSegments(contigList):
+    '''small script to loop through each contig and get rid of extraneous alignemtns'''
     for i in contigList:
         i.cullSegments()
     return
         
 def combineSegments(contigList):
+    '''small script to loop through each contig and combine alignments that are very close to one another'''
     combined=[]
     for i in contigList:
         try: 
@@ -69,22 +92,6 @@ def combineSegments(contigList):
         except NotInformativeError:
             pass
     return combined    
-
-def intersectsTocontigList(intersectFile):
-    out='cp '
-    contigs=[]
-    with open(intersectFile, "r") as f:
-        for line in f:
-            atts=line.split("\t")
-            if int(atts[-1])>1:
-                contigs.append(atts[3])
-    for i in contigs:
-        out+=i+".bed "
-    out += "../../overlaps"
-    with open("../../copyCMD.sh","w") as o:
-        o.write(out)
-    return contigs
-                
 
 def readScaffold(bedFile):
     '''take a bed file
@@ -105,12 +112,13 @@ def groupPiecesByChromosome(contigs, scaffolds):
         except KeyError:
             chromDict[contig.getChrom()]=([contig,],[])
     for scaffold in scaffolds:
-        if (not scaffold.getChrom()=='Hmel200') and (not scaffold.getName()=="Ns"):
+        if (not scaffold.getName()=="Ns"):
             try:
                 chromDict[scaffold.getChrom()][1].append(scaffold)
             except KeyError:
-                pass
+                chromDict[scaffold.getChrom()]=([],[scaffold])
     return chromDict
+
 
 def makeChromosomes(chromDict):
     chromosomes=[]
@@ -118,107 +126,8 @@ def makeChromosomes(chromDict):
         chromosomes.append(Chromosome(key, chromDict[key][0], chromDict[key][1]))
     return chromosomes
         
-chromosomes=runAll("simulatedData/fullOverlaps/","simulatedData/agpToBed_chroms.bed")      
 
-for chromosome in chromosomes:
-    print chromosome.getName()
-    chromosome.combineGroups("first")
-    chromosome.writeResults()
-#
-for chromosome in chromosomes:
-    if chromosome.getName() == "Hmel201":
-         Hmel201 = chromosome
-for item in Hmel201.getGroups():
-    scafList=[scaf.getName() for scaf in item.getScaffoldList()]
-    if "Hmel201019" in scafList:
-         group=item
-#
-#if joinedSupers == [] and len(superScaffolds) > 0:
-#            joinedSupers=superScaffolds[0]
-#            return self.joinSuperScaffolds(superScaffolds[1:],joinedSupers)
-#elif len(superScaffolds) == 0:
-#    return joinedSupers
-#else:
-#    notJoined=[]
-#    for index in range(len(superScaffolds)):
-#        toJoin=superScaffolds[index]
-#        if toJoin.isOverlapping(joinedSupers):
-#            if toJoin.hasNewInfo(joinedSupers):
-#                joinedSuperScafs=joinedSupers.getUsedScaffolds()
-#                joinedSuperContigs=joinedSupers.getContigs()
-#                
-#                overlappingPart=toJoin.getFirstOverlap(joinedSupers)
-#                toJoin.makePositive(overlappingPart)
-#                joinedSupers.makePositive(overlappingPart)
-#                supers=[joinedSupers,toJoin]
-#                
-#                joinedSupersStart=joinedSupers.lengthBefore(overlappingPart)
-#                toJoinStart=toJoin.lengthBefore(overlappingPart)
-#                distFromStart=[joinedSupersStart,toJoinStart]
-#                
-#                joinedSupersEnd=joinedSupers.lengthAfter(overlappingPart)
-#                toJoinEnd=toJoin.lengthAfter(overlappingPart)                        
-#                distFromEnd=[joinedSupersEnd,toJoinEnd]
-#                
-#                furthestFromStart=distFromStart.index(max(distFromStart))
-#                startSuper=supers[furthestFromStart]
-#                
-#                furthestFromEnd=distFromEnd.index(max(distFromEnd))
-#                endSuper=supers[furthestFromEnd]
-#                
-#                startOverlappingIndex=startSuper.getOverlappingIndices(overlappingPart)[0]
-#                endOverlappingIndex=endSuper.getOverlappingIndices(overlappingPart)[0]
-#                
-#                newStart=[]
-#                for part in range(len(startSuper.getPartsInOrder()[:startOverlappingIndex])):
-#                    newStart.append(startSuper.getPartsInOrder()[part].exportPart())
-#                    
-#                newEnd=[]
-#                try:
-#                    for part in range(endOverlappingIndex+1, len(endSuper.getPartsInOrder())):
-#                        newEnd.append(endSuper.getPartsInOrder()[part].exportPart())
-#                except IndexError:
-#                    newEnd=[]
-#                
-#                
-#                startOverlapPart=startSuper.getPartsInOrder()[startOverlappingIndex]
-#                endOverlapPart=endSuper.getPartsInOrder()[endOverlappingIndex]
-#                overlapBackbone=startOverlapPart.getBackbone()
-#                
-#                newOverlapPart=[(overlapBackbone,max(startOverlapPart.getStart(), endOverlapPart.getStart()), min(startOverlapPart.getEnd(), endOverlapPart.getEnd()),'+'),]
-#                joinedSupers=newStart+newOverlapPart+newEnd
-#                joinedSupers=self.checkNegatives(joinedSupers)
-#                joinedSupers = SuperSegment(joinedSupers)
-#                if toJoin.getContigs() != []:
-#                    joinedSupers.contigs.append(toJoin.contigs[0])
-#                joinedSupers.contigs+=joinedSuperContigs
-#                joinedSupers.usedScaffolds+=toJoin.getUsedScaffolds()
-#                joinedSupers.usedScaffolds+=joinedSuperScafs
-#                
-#                try:
-#                    unjoined=notJoined+superScaffolds[index+1:]
-#                except IndexError:
-#                    unjoined=notJoined
-#                return self.joinSuperScaffolds(unjoined, joinedSupers)
-#            else:
-#                if toJoin.getContigs() != []:
-#                    joinedSupers.contigs.append(toJoin.contigs[0])
-#                joinedSupers.usedScaffolds+=toJoin.getUsedScaffolds()
-#                try:
-#                    unjoined=notJoined+superScaffolds[index+1:]
-#                except IndexError:
-#                    unjoined=notJoined
-#                return self.joinSuperScaffolds(unjoined, joinedSupers) 
-#        else:
-#            notJoined.append(superScaffolds[index]) 
-##If there are superScaffolds that could not be joined, it's because we have something like
-##scaffolds 1 and 2 both were placed inside 3, and the superScaffold that links 1 and 2 together
-##therefore doesn't overlap with the big combined one
-#for supScaf in notJoined:
-#    if supScaf.getContigs() != []:
-#        joinedSupers.contigs.append(supScaf.getContigs()[0])
-#    joinIgnores=[seg.getOverlap()[0].getName() for seg in joinedSupers.getTrueIgnores()]
-#    for used in supScaf.getUsedScaffolds():
-#        if used.getName() not in joinIgnores:
-#            joinedSupers.usedScaffolds.append(used)
-#return joinedSupers   
+chromosomes=runAll("data/fullOverlaps/","data/agpToBed_chroms.bed", \
+"data/Hmel2.fa", "data/h_melpomene_clipped_1000.fasta", combineMethod="first")      
+
+
