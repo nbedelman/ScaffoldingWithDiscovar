@@ -127,7 +127,7 @@ def makeChromosomes(chromDict):
     return chromosomes
         
 
-chromosomes=runAll("data/fullOverlaps/","data/agpToBed_chroms.bed", \
-"data/Hmel2.fa", "data/h_melpomene_clipped_1000.fasta", combineMethod="first")      
+#chromosomes=runAll("data/fullOverlaps/","data/agpToBed_chroms.bed", \
+#"data/Hmel2.fa", "data/h_melpomene_clipped_1000.fasta", combineMethod="first")      
 
 

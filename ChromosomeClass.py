@@ -174,6 +174,6 @@ class Chromosome(object):
             newRecord.description=str(usedParts)
             newScafs.append(newRecord)
             groupCount+=1
-        SeqIO.write(newScafs,open(self.getName()+"fixed.fasta", "w"), "fasta")
+        SeqIO.write(newScafs,open(self.getName()+"discoOrder.fasta", "w"), "fasta")
             
             
