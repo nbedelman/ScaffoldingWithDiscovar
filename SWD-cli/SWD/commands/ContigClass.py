@@ -30,6 +30,7 @@ class Contig(object):
         self.goodSegments=[]  
         self.combinedSegments=[]    
         self.connectors=[]  
+        self.inOrEx="e"
     def getScore(self):
         return self.score      
     def getChrom(self):
@@ -56,6 +57,8 @@ class Contig(object):
         return self.goodSegments
     def getCombinedSegments(self):
         return self.combinedSegments
+    def getInOrEx(self):
+        return self.inOrEx
     def cullSegments(self):
         if self.getChrom() != "Hmel200":
             chrom=self.getChrom()

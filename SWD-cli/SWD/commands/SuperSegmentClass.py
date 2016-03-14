@@ -27,6 +27,7 @@ class SuperSegment(object):
         self.segIgnores=[]
         self.unusedScaffolds=[]
         self.inclusiveJoin=[]
+        self.exclusiveJoin=[]
     def getContigs(self):
         '''return the list of unique contigs used by this superSegment'''
         unique=[]
@@ -130,6 +131,7 @@ class SuperSegment(object):
         return overlaps
         
     def getFirstOverlap(self, otherSuperSegment, partType=None):
+        '''assumes superSegments are oriented in the same direction'''
         thisSuperParts=[]
         otherSuperParts=[]
         for part in self.getPartsInOrder():

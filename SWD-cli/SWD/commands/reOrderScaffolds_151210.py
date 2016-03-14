@@ -57,12 +57,12 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMe
         print "writing output"
         print chromosome.getName()
         chromosome.makeAllGroups()
-        for group in chromosome.getGroups():
-            group.makeSuperScaffolds()
-        chromosome.combineGroups(combineMethod)
-        chromosome.writeOverviewResults()
-        chromosome.writeFasta(originalGenome, discovarAssembly)
-        print "done"
+        #for group in chromosome.getGroups():
+        #    group.makeSuperScaffolds()
+        #chromosome.combineGroups(combineMethod)
+        #chromosome.writeOverviewResults()
+        ##chromosome.writeFasta(originalGenome, discovarAssembly)
+        #print "done"
     print "COMPLETED"
     return chromosomes
     
@@ -71,22 +71,28 @@ def readAllContigs(directory, reportDirectory):
     '''takes a directory with bed files of contig alignments
     returns a list of Contig objects'''
     rejectList=[]
+    inclusiveList=[]
     if reportDirectory:
         for subdir, dirs, files in os.walk(reportDirectory):
             for file in files:
                 if "report" in file:
-                    data=read_csv(file)
+                    data=read_csv(reportDirectory+file)
                     for line in data:
                         if line[6].lower()=="x":
                             rejectList.append(line[0])
                             write_csv("reject_report.csv",[line,])
+                        elif line[6].lower()=="i":
+                            inclusiveList.append(line[0])                    
     contigs=[]
     rootdir = directory
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             base=file.strip(".bed")
             if base not in rejectList:
-                contigs.append(Contig(rootdir+"/"+file))
+                con=Contig(rootdir+"/"+file)
+                if base in inclusiveList:
+                    con.inOrEx = 'i'
+                contigs.append(con)
     return contigs
     
 def cullSegments(contigList):
@@ -162,7 +168,7 @@ def write_csv(file, asequence, header=None):
     fp.close()
         
 
-chromosomes=runAll("data/fullOverlaps/","data/agpToBed_chroms.bed", \
-"data/Hmel2.fa", "data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="./")      
+chromosomes=runAll("../../../data/fullOverlaps/","../../../data/agpToBed_chroms.bed", \
+"../../../data/Hmel2.fa", "../../../data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="../../../results_160314/")      
 
 
