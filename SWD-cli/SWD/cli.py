@@ -1,17 +1,22 @@
 """
-skele
+SWD
 Usage:
-  skele hello
-  skele -h | --help
-  skele --version
+  SWD hello
+  SWD lastAlign
+  SWD mafToSwbed
+  SWD reOrderChroms
+  SWD -h | --help
+  SWD --version
 Options:
   -h --help                         Show this screen.
   --version                         Show version.
 Examples:
-  skele hello
+  SWD lastAlign -r <REF> -q <QUERY> -l <LAST OPTIONS> -o <FOLDER FOR OUTPUT>
+  SWD mafToSwbed -m <MAF FILE> -o <FOLDER FOR OUTPUT>
+  SWD reOrderChroms
 Help:
   For help using this tool, please open an issue on the Github repository:
-  https://github.com/rdegges/skele-cli
+  https://github.com/nbedelman/ScaffoldingWithDiscovar
 """
 
 

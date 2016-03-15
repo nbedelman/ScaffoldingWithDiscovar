@@ -156,6 +156,7 @@ class SuperSegment(object):
         for part in range(len(self.getPartsInOrder())):
             if self.getPartsInOrder()[part].getName() == backboneName:
                 index=part
+                break #it will stop after first occurrence
         length=0
         for part in range(len(self.getPartsInOrder()[:index])):
             length += self.getPartsInOrder()[part].getLength()
@@ -165,7 +166,7 @@ class SuperSegment(object):
     def lengthAfter(self, backboneName):
         for part in range(len(self.getPartsInOrder())):
             if self.getPartsInOrder()[part].getName() == backboneName:
-                index=part
+                index=part #No break: it will continue until the last occurrence
         length=0
         for part in range(index+1,len(self.getPartsInOrder())):
             length += self.getPartsInOrder()[part].getLength()
