@@ -71,28 +71,22 @@ def readAllContigs(directory, reportDirectory):
     '''takes a directory with bed files of contig alignments
     returns a list of Contig objects'''
     rejectList=[]
-    inclusiveList=[]
     if reportDirectory:
         for subdir, dirs, files in os.walk(reportDirectory):
             for file in files:
                 if "report" in file:
-                    data=read_csv(reportDirectory+file)
+                    data=read_csv(file)
                     for line in data:
                         if line[6].lower()=="x":
                             rejectList.append(line[0])
                             write_csv("reject_report.csv",[line,])
-                        elif line[6].lower()=="i":
-                            inclusiveList.append(line[0])                    
     contigs=[]
     rootdir = directory
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             base=file.strip(".bed")
             if base not in rejectList:
-                con=Contig(rootdir+"/"+file)
-                if base in inclusiveList:
-                    con.inOrEx = 'i'
-                contigs.append(con)
+                contigs.append(Contig(rootdir+"/"+file))
     return contigs
     
 def cullSegments(contigList):
@@ -168,7 +162,7 @@ def write_csv(file, asequence, header=None):
     fp.close()
         
 
-chromosomes=runAll("../../../data/fullOverlaps/","../../../data/agpToBed_chroms.bed", \
-"../../../data/Hmel2.fa", "../../../data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="../../../results_160314/")      
+chromosomes=runAll("data/fullOverlaps/","data/agpToBed_chroms.bed", \
+"data/Hmel2.fa", "data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="./")      
 
 
