@@ -16,6 +16,13 @@ from PartClass import *
 from GroupClass import *
 from ErrorClasses import *
 
+from json import dumps
+from .base import Base
+
+
+class reOrderScaffolds(Base):
+    def run(self):
+        runAll(self.options["<d>"],self.options["<m>"],self.options["<fo>"],self.options["<fn>"])
 
 def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMethod="first", reportDirectory=None):
     '''runs the full program. 
@@ -167,12 +174,12 @@ def write_csv(file, asequence, header=None):
         a.writerows(header)
     a.writerows(asequence)
     fp.close()
-        
-#
-#chromosomes=runAll("../../../data/fullOverlaps/","../../../data/agpToBed_chroms.bed", \
-#"../../../data/Hmel2.fa", "../../../data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="../../../results_160314/")      
 
-chromosomes=runAll("../../../../Hmel3_Project/data/finalAssembly/manualFixOverlaps","../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldMapPlaced_newNames.bed", \
+
+
+#"../../../../Hmel3_Project/data/finalAssembly/manualFixOverlaps","../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldMapPlaced_newNames.bed", \
 "../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldNames_originalOrientation.fa", "../../../../Hmel3_Project/data/finalAssembly/DAV_5_melpomene_a-scaffolds.fasta", \
-combineMethod="first", reportDirectory=None)      
+               combineMethod="first", reportDirectory=None)
+
+
 
