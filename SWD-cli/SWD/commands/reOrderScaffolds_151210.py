@@ -87,12 +87,13 @@ def readAllContigs(directory, reportDirectory):
     rootdir = directory
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
-            base=file.strip(".bed")
-            if base not in rejectList:
-                con=Contig(rootdir+"/"+file)
-                if base in inclusiveList:
-                    con.inOrEx = 'i'
-                contigs.append(con)
+            if ".bed" in file:
+                base=file.strip(".bed")
+                if base not in rejectList:
+                    con=Contig(rootdir+"/"+file)
+                    if base in inclusiveList:
+                        con.inOrEx = 'i'
+                    contigs.append(con)
     return contigs
     
 def cullSegments(contigList):
@@ -167,8 +168,11 @@ def write_csv(file, asequence, header=None):
     a.writerows(asequence)
     fp.close()
         
+#
+#chromosomes=runAll("../../../data/fullOverlaps/","../../../data/agpToBed_chroms.bed", \
+#"../../../data/Hmel2.fa", "../../../data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="../../../results_160314/")      
 
-chromosomes=runAll("../../../data/fullOverlaps/","../../../data/agpToBed_chroms.bed", \
-"../../../data/Hmel2.fa", "../../../data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="../../../results_160314/")      
-
+chromosomes=runAll("../../../../Hmel3_Project/data/finalAssembly/manualFixOverlaps","../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldMapPlaced_newNames.bed", \
+"../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldNames_originalOrientation.fa", "../../../../Hmel3_Project/data/finalAssembly/DAV_5_melpomene_a-scaffolds.fasta", \
+combineMethod="first", reportDirectory=None)      
 
