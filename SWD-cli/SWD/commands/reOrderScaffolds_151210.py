@@ -168,7 +168,7 @@ def write_csv(file, asequence, header=None):
     fp.close()
         
 
-chromosomes=runAll("../../../data/fullOverlaps/","../../../data/agpToBed_chroms.bed", \
-"../../../data/Hmel2.fa", "../../../data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="../../../results_160314/")      
+#chromosomes=runAll("../../../data/fullOverlaps/","../../../data/agpToBed_chroms.bed", \
+#"../../../data/Hmel2.fa", "../../../data/h_melpomene_clipped_1000.fasta", combineMethod="first", reportDirectory="../../../results_160314/")      
 
 
