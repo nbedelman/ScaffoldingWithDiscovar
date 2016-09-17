@@ -7,8 +7,12 @@
 */*/*.fa
 */*/*.fasta
 *.csv
-*.pyc
+<<<<<<< HEAD
+*/*/*.pyc
+*/*/*/*.pyc
 
+=======
+>>>>>>> 6d911ff0f1a83cb9ec191d98bda2450ef3df9633
 
 data/fullOverlaps/flattened_line_13528.bed
 
