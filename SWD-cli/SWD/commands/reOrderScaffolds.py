@@ -25,13 +25,13 @@ class reOrderScaffolds(Base):
         runAll(self.options["<d>"],self.options["<m>"],self.options["<fo>"],self.options["<fn>"])
 
 def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMethod="first", reportDirectory=None):
-    '''runs the full program. 
+    '''runs the full program.
     Takes:
         bedDirectory: a directory containing a bed file for each discovar contig's alignment to genome
         agpBedFile: a bed file that gives information about where scaffolds are placed on the genome
         originalGenome: a fasta file of the genome
         discovarAssembly: a fasta file of the discovar assembly (a.lines.fasta)
-        combineMethod: either "first" or "best". used to place combined scaffolds onto chromosome, based either on  
+        combineMethod: either "first" or "best". used to place combined scaffolds onto chromosome, based either on
             where the earliest scaffold was originally mapped or where the best (anchored or largest) scaffold was originally mapped
     Returns:
         *coordinates.txt: text files with coordinated of combined scaffolds in form <SCAFFOLD,START,STOP,STRAND>
@@ -72,7 +72,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMe
         print "done"
     print "COMPLETED"
     return chromosomes
-    
+
 
 def readAllContigs(directory, reportDirectory):
     '''takes a directory with bed files of contig alignments
@@ -89,7 +89,7 @@ def readAllContigs(directory, reportDirectory):
                             rejectList.append(line[0])
                             write_csv("reject_report.csv",[line,])
                         elif line[6].lower()=="i":
-                            inclusiveList.append(line[0])                    
+                            inclusiveList.append(line[0])
     contigs=[]
     rootdir = directory
     for subdir, dirs, files in os.walk(rootdir):
@@ -102,23 +102,23 @@ def readAllContigs(directory, reportDirectory):
                         con.inOrEx = 'i'
                     contigs.append(con)
     return contigs
-    
+
 def cullSegments(contigList):
     '''small script to loop through each contig and get rid of extraneous alignemtns'''
     for i in contigList:
         i.cullSegments()
     return
-        
+
 def combineSegments(contigList):
     '''small script to loop through each contig and combine alignments that are very close to one another'''
     combined=[]
     for i in contigList:
-        try: 
+        try:
             i.combineSegments()
             combined.append(i)
         except NotInformativeError:
             pass
-    return combined    
+    return combined
 
 def readScaffold(bedFile):
     '''take a bed file
@@ -130,7 +130,7 @@ def readScaffold(bedFile):
             if not scaf.getName()=='Ns':
                 bedList.append(scaf)
     return bedList
-       
+
 def groupPiecesByChromosome(contigs, scaffolds):
     chromDict={}
     for contig in contigs:
@@ -155,10 +155,10 @@ def makeChromosomes(chromDict):
 
 def read_csv(file, header=None):
     '''
-    Takes a csv file, 
+    Takes a csv file,
     outputs a list, where each element is a list which contains the cells of a single row as strings.
     '''
-    data = []    
+    data = []
     reader = csv.reader(open(file, 'rU'))
     for row in reader:
         data.append(row)
@@ -178,6 +178,5 @@ def write_csv(file, asequence, header=None):
 
 #"../../../../Hmel3_Project/data/finalAssembly/manualFixOverlaps","../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldMapPlaced_newNames.bed", \
 #"../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldNames_originalOrientation.fa", "../../../../Hmel3_Project/data/finalAssembly/DAV_5_melpomene_a-scaffolds.fasta", \
-#               combineMethod="first", reportDirectory=None)
-
-
+               combineMethod="first", reportDirectory=None)
+#
