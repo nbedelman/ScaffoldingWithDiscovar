@@ -10,6 +10,8 @@
 */*/*.pyc
 */*/*/*.pyc
 
+SWD-cli/SWD/.DS_Store
+
 data/fullOverlaps/flattened_line_13528.bed
 
 results_160317/.DS_Store
