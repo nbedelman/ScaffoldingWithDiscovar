@@ -7,3 +7,16 @@
 */*/*.fa
 */*/*.fasta
 *.csv
+*.pyc
+
+data/fullOverlaps/flattened_line_13528.bed
+
+results_160317/.DS_Store
+
+sizeDistEnvScaffolds.tiff
+
+data/fullOverlaps/flattened_line_13528.bed
+
+*.bed
+
+*.bed

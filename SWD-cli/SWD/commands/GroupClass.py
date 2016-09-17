@@ -151,7 +151,7 @@ class Group(object):
     def joinSuperScaffolds(self, superScaffolds, joinedSupers, intraContig):
         if joinedSupers == [] and len(superScaffolds) > 0:
             joinedSupers=superScaffolds[0]
-            return self.joinSuperScaffolds(superScaffolds[1:],joinedSupers, intraContig)
+            return self.joinSuperScaffolds(superScaffolds[1:],joinedSupers,intraContig)
         elif len(superScaffolds) == 0:
             return joinedSupers
         else:
@@ -168,7 +168,7 @@ class Group(object):
                 else:
                     notJoined.append(superScaffolds[index]) 
                 
-            if notJoined != [] :
+            if notJoined != []:
                 split=self.insideOrUnjoinable(joinedSupers, notJoined)
                 joinedSupers=split[0]
                 unJoinable=split[1]
@@ -229,9 +229,13 @@ class Group(object):
                     envelopedScafFlag=True
                     enveloper=double                     
         if envelopedScafFlag:
+            #pass
+            #print 'Has EnvelopedScafFlag'
             return self.envelopedScafJoin(joinedSupers, toJoin, enveloper, intraContig)
         else:
+            #print 'Doesnt have envelopedScafFlag'            
             return self.notEnvelopedScafJoin(joinedSupers, toJoin)
+
                     
     def notEnvelopedScafJoin(self, joinedSupers, toJoin):
         joinedSuperScafs=joinedSupers.getUsedScaffolds()
@@ -522,7 +526,7 @@ class Group(object):
             
     
     def alignDirections(self, superSeg1, superSeg2):    
-        overlappingPart=superSeg1.getFirstOverlap(superSeg2)
+        overlappingPart=superSeg1.getFirstOverlap(superSeg2,partType=Scaffold) #edit 25/8/16
         superSeg1.makePositive(overlappingPart)
         superSeg2.makePositive(overlappingPart)
         supers=[superSeg1,superSeg2]     
@@ -651,6 +655,7 @@ class Group(object):
         contig=copy.copy(seg1.getContig())
         output=''
         if seg1.getStrand() == '+' and self.distanceBetweenSegsChecks(seg1,seg2):
+            #Figure out which scaffold should go first and which should go last
             distFromScafStart.append(seg1.getDistanceFromScafStart())
             distFromScafStart.append(seg2.getDistanceFromScafStart() - (seg2.getConStart()-seg1.getConStart()))
             distFromScafEnd.append(seg1.getDistanceFromScafEnd() - seg2.getConEnd()-seg1.getConEnd())
@@ -659,16 +664,35 @@ class Group(object):
             startScaf=scaffolds[furthestFromStart]
             furthestFromEnd=distFromScafEnd.index(max(distFromScafEnd))
             endScaf=scaffolds[furthestFromEnd]
+            #figure out which segment maps to the start scaffold, and which to the end scaffold
+            if furthestFromStart==0:
+                startSeg=seg1
+            elif furthestFromStart==1:
+                startSeg=seg2
+            if furthestFromEnd==0:
+                endSeg=seg1
+            elif furthestFromEnd==1:
+                endSeg=seg2
             
         elif seg1.getStrand() == '-' and self.distanceBetweenSegsChecks(seg1,seg2):
+            #Figure out which scaffold should go first and which should go last
             distFromScafStart.append(seg1.getDistanceFromScafStart()- (seg2.getConEnd()-seg1.getConEnd()))
             distFromScafStart.append(seg2.getDistanceFromScafStart())
             distFromScafEnd.append(seg1.getDistanceFromScafEnd())
-            distFromScafEnd.append(seg2.getDistanceFromScafEnd()- seg2.getConStart()-seg1.getConStart())
+            distFromScafEnd.append(seg2.getDistanceFromScafEnd()- (seg2.getConStart()-seg1.getConStart()))
             furthestFromStart=distFromScafStart.index(max(distFromScafStart))
             startScaf=scaffolds[furthestFromStart]
             furthestFromEnd=distFromScafEnd.index(max(distFromScafEnd))
             endScaf=scaffolds[furthestFromEnd]
+            #figure out which segment maps to the start scaffold, and which to the end scaffold
+            if furthestFromStart==0:
+                startSeg=seg1
+            elif furthestFromStart==1:
+                startSeg=seg2
+            if furthestFromEnd==0:
+                endSeg=seg1
+            elif furthestFromEnd==1:
+                endSeg=seg2
 
         else:
             return  
@@ -686,16 +710,18 @@ class Group(object):
                 output.usedScaffolds+=[seg1.getOverlap()[0],seg2.getOverlap()[0]]
                 
         else:
-            endOfStartScafOverlap = min(startScaf.getLength()-distFromScafEnd[furthestFromStart], startScaf.getLength())
+            #endOfStartScafOverlap = min(startScaf.getLength()-distFromScafEnd[furthestFromStart], startScaf.getLength())
+            endOfStartScafOverlap = min(startScaf.getLength()-startSeg.getDistanceFromScafEnd(), startScaf.getLength())
             firstScafSeg=(startScaf,1,endOfStartScafOverlap, startScaf.getStrand())
             
             contigDiff=seg2.getConStart()-seg1.getConEnd()
             if contigDiff <0:
-                startOfEndScafOverlap=max(distFromScafStart[furthestFromEnd] + contigDiff, 1)
+                startOfEndScafOverlap=max(endSeg.getDistanceFromScafStart(), 1)
                 endScafSeg=(endScaf,startOfEndScafOverlap, endScaf.getLength(), endScaf.getStrand())
                 output=[firstScafSeg,endScafSeg]
             elif contigDiff >=0:
-                startOfEndScafOverlap=max(distFromScafStart[furthestFromEnd], 1)
+                #startOfEndScafOverlap=max(distFromScafStart[furthestFromEnd], 1)
+                startOfEndScafOverlap=max(endSeg.getDistanceFromScafStart(), 1)
                 contigSeg=(contig,min(seg1.getConEndPos(), seg2.getConEndPos()), max(seg1.getConStartPos(), seg2.getConStartPos()),seg1.getStrand())
                 endScafSeg=(endScaf, startOfEndScafOverlap, endScaf.getLength(), endScaf.getStrand())
                 output=[firstScafSeg,contigSeg,endScafSeg]                              

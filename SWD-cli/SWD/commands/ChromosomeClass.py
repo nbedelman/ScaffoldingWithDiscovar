@@ -140,13 +140,13 @@ class Chromosome(object):
         reps=[]
         for superScaf in self.getSuperScaffolds():
             if superScaf.printSuperSeg() not in coords:
-                f.write("SCAFFOLD NUMBER: " + str(groupCount) + "\n")
-                f.write(superScaf.printSuperSeg())
+                f.write(self.getName()+"_number_" + str(groupCount) + "\n")
+                f.write(superScaf.printSuperSeg()+"\n")
                 groupCount+=1
                 coords.append(superScaf.printSuperSeg())
         for group in self.getGroups():
             fullJoin=group.getFullGroupJoin()
-            if fullJoin !=[] and group.printGroupEnvelopers() not in envs:
+            if fullJoin !=[]:# and group.printGroupEnvelopers() not in envs:
                 env.write(group.printGroupEnvelopers())
                 envs.append(group.printGroupEnvelopers())
                 reps+=(group.getContigReports())
