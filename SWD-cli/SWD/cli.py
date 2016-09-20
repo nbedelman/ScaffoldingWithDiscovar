@@ -3,6 +3,7 @@
 import argparse
 from comms import hello
 from comms import reOrderScaffolds
+from comms import mafToBed
 
 
 parser = argparse.ArgumentParser(description='Scaffolding with DISCOVAR')
@@ -25,11 +26,21 @@ parser_reOrder.add_argument('-r', '--refGenome',type=str,
 parser_reOrder.add_argument('-a', '--newAssembly',type=str,
                     help='Fasta file of new assembly')
 parser_reOrder.set_defaults(which='reOrder')
+
+
+#mafToBed subParser
+parser_mafToBed=subparsers.add_parser('mafToBed',help='mafToBed help')
+parser_mafToBed.add_argument('-a', '--alignment',type=str,
+                            help='path to alignment in maf format')
+parser_mafToBed.add_argument('-f', '--assembly',type=str,
+                             help='path to new assembly in fasta format')
+parser_mafToBed.set_defaults(which='mafToBed')
+
+#Whichever parser was used, parse the arguments
 arguments=parser.parse_args()
 
 
 ###########the Hello Command#######
-
 
 def h(arg=''):
 	hello.run(arg)
@@ -40,12 +51,24 @@ if arguments.which=='h':
 	else:
 		h()
 
-
 #############The reOrderScaffolds Command#############
-
 
 def reOrder(bedDirectory,map,refGenome,newAssembly):
 	reOrderScaffolds.runAll(bedDirectory,map,refGenome,newAssembly)
 
 if arguments.which=='reOrder':
 	reOrder(arguments.bedDirectory,arguments.map,arguments.refGenome,arguments.newAssembly)
+
+
+##############The mafToBed Command
+
+def mafToBed(mafAlignment,discoOutput):
+    mafToBed.runAll(mafAlignment,discoOutput)
+
+if arguments.which=='mafToBed':
+    mafToBed(arguments.alignment, arguments.assembly)
+
+
+
+
+
