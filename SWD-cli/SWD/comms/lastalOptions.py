@@ -1,43 +1,51 @@
-from lastalConfig import *
+#!/usr/bin/env python
+import sys
 
-lastalDict={"-D":alignExpect,
-"-E":maxEG2,
-"-r":matchScore,
-"-q":misMatch,
-"-p":scoreMatrix,
-"-a":gapExistCost,
-"-b":gapExtendCost,
-"-A":insertExistCost,
-"-B":insertExtendCost,
-"-c":afflineGap,
-"-x":maxScoreDropGap,
-"-y":maxScoreDropGapless,
-"-z":maxScoreDropGapFinal,
-"-d":minScoreGap,
-"-e":minAlignScore,
-"-m":multiplicity,
-"-l":minInitMatchLength,
-"-L":maxInitMatchLength,
-"-k":searchStep,
-"-W":minQuerySize,
-"-s":queryStrand,
-"-S":dnaStrand,
-"-K":numOverlapQuery,
-"-C":numOverlapExtend,
-"-P":numThreads,
-"-i":batchSize,
-"-M":minDiffAligns,
-"-T":alignType,
-"-n":alignPerQueryPosition,
-"-R":repeatHandling,
-"-u":treatLower,
-"-w":timeKludge,
-"-G":alternateCode,
-"-t":scoreToLikelihood,
-"-g":gammaVal,
-"-j":output,
-"-Q":qualityTreatment}
+def getOptions(configFile):
+    module = __import__(configFile, globals(), locals(), [], -1)
+    lastalDict={"-D":module.alignExpect,
+    "-E":module.maxEG2,
+    "-r":module.matchScore,
+    "-q":module.misMatch,
+    "-p":module.scoreMatrix,
+    "-a":module.gapExistCost,
+    "-b":module.gapExtendCost,
+    "-A":module.insertExistCost,
+    "-B":module.insertExtendCost,
+    "-c":module.afflineGap,
+    "-x":module.maxScoreDropGap,
+    "-y":module.maxScoreDropGapless,
+    "-z":module.maxScoreDropGapFinal,
+    "-d":module.minScoreGap,
+    "-e":module.minAlignScore,
+    "-m":module.multiplicity,
+    "-l":module.minInitMatchLength,
+    "-L":module.maxInitMatchLength,
+    "-k":module.searchStep,
+    "-W":module.minQuerySize,
+    "-s":module.queryStrand,
+    "-S":module.dnaStrand,
+    "-K":module.numOverlapQuery,
+    "-C":module.numOverlapExtend,
+    "-P":module.numThreads,
+    "-i":module.batchSize,
+    "-M":module.minDiffAligns,
+    "-T":module.alignType,
+    "-n":module.alignPerQueryPosition,
+    "-R":module.repeatHandling,
+    "-u":module.treatLower,
+    "-w":module.timeKludge,
+    "-G":module.alternateCode,
+    "-t":module.scoreToLikelihood,
+    "-g":module.gammaVal,
+    "-j":module.output,
+    "-Q":module.qualityTreatment}
+    
+    optionString=''
+    for k in lastalDict.keys():
+        if lastalDict[k]:
+            #print k,lastalDict[k],
+            optionString+=('''%s %s ''' % (k,lastalDict[k]))
+    return optionString
 
-for k in lastalDict.keys():
-    if lastalDict[k]:
-        print k, lastalDict[k],
+

@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 #updated june 27, 2016
 #Nate Edelman
@@ -6,14 +6,13 @@
 from Bio import SeqIO
 import sys
 from operator import itemgetter
-import argparse
 
 #mafAlignment=sys.argv[1]
 #discoOutput=sys.argv[2]
 
 
 def addToBedList(bedList, scaf, chromStart,chromEnd,id,length,strand,contig,conStart):
-	'''takes a list of future bed entries, along with a number of attributes for a new entry. 
+	'''takes a list of future bed entries, along with a number of attributes for a new entry.
 	Adds the new bed attributes as a bed-ordered list'''
         bedList.append([scaf,chromStart-conStart,0,id,length,strand,chromStart,chromEnd,0])
 	if length > bedList[0][4]:
@@ -21,9 +20,9 @@ def addToBedList(bedList, scaf, chromStart,chromEnd,id,length,strand,contig,conS
 	return bedList
 
 class mafAttributes(object):
-	def __init__(self,mafLine):
-	    line=mafLine.split()
-	    try:
+    def __init__(self,mafLine):
+	line=mafLine.split()
+        try:
             self.type=line[0]
             self.label=line[1]
             try:
@@ -41,10 +40,10 @@ class mafAttributes(object):
         except IndexError:
             self.type="NA"
             self.label="NA"
-			self.start="NA"
-			self.end="NA"
-			self.length="NA"
-			self.strand="NA"
+            self.start="NA"
+            self.end="NA"
+            self.length="NA"
+            self.strand="NA"
 
 	def getType(self):
 		return self.type
@@ -61,41 +60,41 @@ class mafAttributes(object):
 
 
 def mafToBedDict(mafFile):
-	'''  Takes a maf file (like the output of LAST
-		outputs a dictionary. Each key is a different query contig;  the value for each is
-		a list of lists. Each single list contains ordered attributes to write to a bed file'''
-	conDict={}
-	current=[]
-	id=0
+    '''  Takes a maf file (like the output of LAST
+	outputs a dictionary. Each key is a different query contig;  the value for each is
+	a list of lists. Each single list contains ordered attributes to write to a bed file'''
+    conDict={}
+    current=[]
+    id=0
     referenceStart=''
-	with open(mafFile, "r") as file:
-		for line in file:
-            #Skip all commented out lines -  there can be many at the beginning
-			if not "#" in line:
-		    	maf=mafAttributes(line)
-    			if maf.getType()=='s':
+    with open(mafFile, "r") as file:
+	for line in file:
+        #Skip all commented out lines -  there can be many at the beginning
+            if not "#" in line:
+                maf=mafAttributes(line)
+                if maf.getType()=='s':
                     #Use the very first s line to define the reference pattern
                     if referenceStart == '':
                         referenceStart = maf.getLabel[:3]
                     #For every other line, we can now distinguish between reference and non-reference sequences
                     #Use the reference line in a block to define the reference chromosome name and position
-			 		if  referenceStart in maf.getLabel():
-        	        	chrom=maf.getLabel()
-     	  	          	scaf=maf.getLabel()
-    	          		chromStart=maf.getStart()
-    	          		chromEnd=maf.getEnd()
-       	          		length=maf.getLength()
+                    if  referenceStart in maf.getLabel():
+                        chrom=maf.getLabel()
+                        scaf=maf.getLabel()
+                        chromStart=maf.getStart()
+                        chromEnd=maf.getEnd()
+                        length=maf.getLength()
                     #Use the query line to define the query name, position, and strand
-		      		else:
-       	          		id += 1
-       	          		contig= maf.getLabel()
-       	          		if contig not in conDict.keys():
-      	              		conDict[contig] = [[0,0,0,0,0,0,0,0,0],]
-       	          		conStart= maf.getStart()
-       	          		conEnd= maf.getEnd()
-       	          		strand = maf.getStrand()
-       	          		conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
-        return conDict
+                    else:
+                        id += 1
+                        contig= maf.getLabel()
+                        if contig not in conDict.keys():
+                            conDict[contig] = [[0,0,0,0,0,0,0,0,0],]
+                            conStart= maf.getStart()
+                            conEnd= maf.getEnd()
+                            strand = maf.getStrand()
+                            conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
+    return conDict
 
 
 def capBestAlign(fastaEntry,bedEntry):
