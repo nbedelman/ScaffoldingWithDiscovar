@@ -1,38 +1,56 @@
 #!/usr/bin/env python
 
 import argparse
+import os
 from comms import hello
 from comms import reOrderScaffolds
 from comms import mafToBed
+from comms import lastalOptions
 
 
 parser = argparse.ArgumentParser(description='Scaffolding with DISCOVAR')
 
 subparsers=parser.add_subparsers(help='sub-command help')
-#Hello subParser
-parser_hello=subparsers.add_parser('h',help='hello help')
-parser_hello.add_argument('--Name', type=str,nargs='?',
-                    help='Name of someone you\'d like to say hello to')
-parser_hello.set_defaults(which='h')
+
+#lastAlign subParser
+parser_lastAlign=subparsers.add_parser('lastAlign',help='lastAlign help')
+parser_lastAlign.add_argument('refLoc', type=str,
+                    help='path to reference db, along with prefix. \
+                    i.e. /path/to/reference/<dbName>')
+parser_lastAlign.add_argument('query', type=str,
+                    help='path to query sequence')
+parser_lastAlign.add_argument('config',nargs='?', type=str,
+                    help='path to config file',default="lastalConfig.py")
+parser_lastAlign.set_defaults(which='lastAlign')
 
 #reOrderScaffolds subParser
 parser_reOrder=subparsers.add_parser('reOrder',help='reOrder help')
-parser_reOrder.add_argument('-b', '--bedDirectory',type=str,
-                    help='path to directory containing bed files of contig alignments')
-parser_reOrder.add_argument('-m', '--map',type=str,
+parser_reOrder.add_argument('bedDirectory', type=str,
+                    help='path to directory containing bed files of contig \
+                    alignments created with SWD mafToBed')
+parser_reOrder.add_argument('map', type=str,
                     help='Original genome map file (AGP)')
-parser_reOrder.add_argument('-r', '--refGenome',type=str,
+parser_reOrder.add_argument('--refGenome',type=str,
                     help='Fasta file of reference genome')
-parser_reOrder.add_argument('-a', '--newAssembly',type=str,
+parser_reOrder.add_argument('--newAssembly',type=str,
                     help='Fasta file of new assembly')
 parser_reOrder.set_defaults(which='reOrder')
 
 
 #mafToBed subParser
 parser_mafToBed=subparsers.add_parser('mafToBed',help='mafToBed help')
-parser_mafToBed.add_argument('-a', '--alignment',type=str,
+parser_mafToBed.add_argument('alignment',type=str,
                             help='path to alignment in maf format')
-parser_mafToBed.add_argument('-f', '--assembly',type=str,
+parser_mafToBed.add_argument('assembly',type=str,
+                             help='path to new assembly in fasta format')
+parser_mafToBed.set_defaults(which='mafToBed')
+
+#overviewToIntersects subParser
+parser_mafToBed=subparsers.add_parser('overviewToIntersects',help='overviewToIntersects help')
+parser_mafToBed.add_argument('overview',type=str,
+                            help='path to overview bed file - should be \
+                            something like <species>_allOverviews.bed')
+parser_mafToBed.add_argument('map',type=str,
                              help='path to new assembly in fasta format')
 parser_mafToBed.set_defaults(which='mafToBed')
 
@@ -40,16 +58,18 @@ parser_mafToBed.set_defaults(which='mafToBed')
 arguments=parser.parse_args()
 
 
-###########the Hello Command#######
+###########the lastAlign Command#######
 
-def h(arg=''):
-	hello.run(arg)
+def lastAlign(config, refLoc, query):
+    config=config.split("/")[-1].split(".")[0]
+    print config
+    options=lastalOptions.getOptions(config)
+    cmd='''lastal %s %s %s''' % (options,refLoc,query)
+    print cmd
+    #os.system(cmd)
 
-if arguments.which=='h':
-	if arguments.Name:
-		h(arguments.Name)
-	else:
-		h()
+if arguments.which=='lastAlign':
+    lastAlign(arguments.config, arguments.refLoc, arguments.query)
 
 #############The reOrderScaffolds Command#############
 
@@ -67,8 +87,3 @@ def mafToBed(mafAlignment,discoOutput):
 
 if arguments.which=='mafToBed':
     mafToBed(arguments.alignment, arguments.assembly)
-
-
-
-
-
