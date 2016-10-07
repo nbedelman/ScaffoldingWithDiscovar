@@ -19,7 +19,7 @@ for a stronger filter, though, and we can be more confident in the result.
 Start with  the output from a novel genome assembly (fasta), a scaffolded reference genome (fasta), and a map file for the reference genome (agp)
 
 Reference Genome Map:
-This should be an AGP file in the format:
+This should be a tab-delimited file in the format:
 <chromosomeName>	<start>	<end>	<number>	<D/N>	<scaffoldName>	<1>	<length>	<strand>	<optional additional columns>
 
 
