@@ -16,7 +16,7 @@ for a stronger filter, though, and we can be more confident in the result.
 
 ##PREPARING THE DATA###
 
-Start with  the output from a novel genome assembly (fasta), a fasta file of reference genome scaffolds (fasta), and a map file for the reference genome (bed)
+Start with  the output from a novel genome assembly (fasta), a fasta file of reference genome scaffolds (fasta), and a map file for the reference genome (bed). 
 
 Reference Genome Map:
 This should be in a bed format (see https://genome.ucsc.edu/FAQ/FAQformat#format1)
@@ -30,7 +30,7 @@ Chr1	73249	2694103	Hmel201002	1000	+
 *In this example, when the chromosome is built, each scaffold is separated by 100 Ns. This is accomplished by including an entry called Ns and including it between each scaffold. This is not necessary, and separation of scaffolds by Ns can be done in other ways as well. This particular method is not necessary for SWD to work.
 
 Reference Genome Sequence:
-
+This should be a fasta file with each scaffold as an entry. They should be in "positive" orientation.
 
 Novel Genome Assembly:
 Only use contigs that have a length >= 1000 bp (removeSmallScaffolds.py)
@@ -38,14 +38,17 @@ Only use contigs that have a length >= 1000 bp (removeSmallScaffolds.py)
 ###ALIGNING SEQUENCES###
 
 The tool SWD lastAlign uses the program LAST, and SWD was only tested with LAST. However, theoretically any aligner should be fine,
-as long as you get the output in MAF format. In this section, I will assume you are using LAST. If that's not the case, use another 
+as long as you get the output in MAF format. 
+
+***The novel assembly must be mapped to full chromosomes. SWD genomeBuild combines scaffolds into chromosomes using the provided map file before creating a genome database. If you are using another alignment program, please keep this in mind and make sure to create a chromosomal fasta file prior to alignment.***
+
+In this section, I will assume you are using LAST. If that's not the case, use another 
 aligner and skip to the next section.
 
 To use LAST, you will have to create a reference genome database with lastdb and then align a query to the reference with lastal. 
-To hopefully make this easier, I have created SWD commands for these processes (SWD lastDB and SWD lastAlign) with config files that
-you can edit. They simply run LAST, but nicely within the SWD suite. For LAST documentation, see http://last.cbrc.jp/
+To hopefully make this easier, I have created SWD commands for these processes (SWD genomeBuild and SWD lastAlign) with config files that you can edit. They simply run LAST, but nicely within the SWD suite. For LAST documentation, see http://last.cbrc.jp/
 
-If the genome assembly is large (likely), first split it for better parallelization (fasta-splitter.pl). Then, align each part to genome with lastal.
+If the genome assembly is large (likely), first split it for better parallelization (fasta-splitter.pl). Then, align each part to genome with SWD lastAlign.
 
 The output of this step will be maf files for each of the query sequences you aligned.
 
