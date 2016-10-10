@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+
+#This file allows the user to specify options for lastal. Each option is explained via its documentation entry from http://last.cbrc.jp/doc/lastal.html and then assigned a variable name. Simply change the value of the variable to specify an option.
+
 ####################
 ###OPTIONS I USED###
 ####################

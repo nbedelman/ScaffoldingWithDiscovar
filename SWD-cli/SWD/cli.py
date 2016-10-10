@@ -2,15 +2,28 @@
 
 import argparse
 import os
-from comms import hello
+
 from comms import reOrderScaffolds
 from comms import mafToBed
 from comms import lastalOptions
+from comms import lastdbOptions
 
 
 parser = argparse.ArgumentParser(description='Scaffolding with DISCOVAR')
 
 subparsers=parser.add_subparsers(help='sub-command help')
+
+#genomeBuild subParser
+parser_genomeBuild=subparsers.add_parser('genomeBuild',help='genomeBuild help')
+parser_genomeBuild.add_argument('map', type=str,
+                    help='path to map bed file')
+parser_genomeBuild.add_argument('refGenome', type=str,
+                    help='path to reference genome file')
+parser_genomeBuild.add_argument('config',nargs='?', type=str,
+                    help='path to config file',default="lastdbConfig.py")
+parser_genomeBuild.add_argument('--asChroms',action='store_true',
+                    help='specifies that refGenome is a fasta file with one entry per chromosome. Default is that refGenome is a fasta file with one entry per scaffold.')
+parser_genomeBuild.set_defaults(which='genomeBuild')
 
 #lastAlign subParser
 parser_lastAlign=subparsers.add_parser('lastAlign',help='lastAlign help')
@@ -57,6 +70,27 @@ parser_mafToBed.set_defaults(which='mafToBed')
 #Whichever parser was used, parse the arguments
 arguments=parser.parse_args()
 
+########### The genomeBuild Command ###########
+def genomeBuild(map, refGenome, config, asChroms):
+    if not asChroms:
+        print "combining scaffolds into chromosomes"
+        chromGenome=refGenome.split(".")[0]+"_chroms.fa"
+        combCMD='''bedtools getfasta -s -name -fi %s -bed %s -fo %s ''' % (refGenome,map,chromGenome)
+        print combCMD
+        os.system(combCMD)
+        refGenome=chromGenome
+    config=os.path.basename(config).split(".")[0]
+    print "running lastdb with the following parameters:"
+    print "config file:", config
+    options=lastdbOptions.getOptions(config)
+    dbName=os.path.basename(refGenome).split(".")[0]+"db"
+    print "database name:", dbName
+    cmd='''lastdb %s %s %s''' % (options,dbName,refGenome)
+    print cmd
+    os.system(cmd)
+
+if arguments.which=='genomeBuild':
+    genomeBuild(arguments.map, arguments.refGenome, arguments.config, arguments.asChroms)
 
 ###########the lastAlign Command#######
 

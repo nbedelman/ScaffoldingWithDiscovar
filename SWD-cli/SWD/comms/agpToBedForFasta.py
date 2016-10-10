@@ -2,7 +2,6 @@
 from Bio.Seq import Seq
 from Bio import SeqIO
 
-
 def ChrToHmel(chromo):
     '''Takes a chromosome ID in format ChrX or ChrXX
     returns chromosomeID in format Hmel2XX'''
@@ -97,10 +96,10 @@ def readAGP(agpFile, color=False):
             else:
                 agpList.append(agpEntry(line))
     return agpList
-        
+
 def addUnmappedChroms(bedFile,fastaFile, color=False, scaffs=False):
     with open(bedFile, "r") as b:
-            allScaffs=[line.split()[3] for line in b] 
+            allScaffs=[line.split()[3] for line in b]
     b.close()
     f = SeqIO.parse(open(fastaFile, "r"), "fasta")
     start=1
@@ -130,7 +129,7 @@ def addUnmappedChroms(bedFile,fastaFile, color=False, scaffs=False):
                 o.write(output)
     o.close()
     f.close()
-    
+
 def writeBedForFasta(agpFile,fastaFile, outFile):
     scafList=readAGP(agpFile, color=True)
     with open(outFile,"w") as f:
@@ -139,7 +138,7 @@ def writeBedForFasta(agpFile,fastaFile, outFile):
                 f.write(entry.writeBed(color=False,scaffs=True))
     f.close()
     addUnmappedChroms(outFile, fastaFile, color=False, scaffs=True)
-    
+
 def convertScaffsToChroms(bedFile):
     names=bedFile[:-4]
     f=open(bedFile, "r")
@@ -166,6 +165,3 @@ def convertScaffsToChroms(bedFile):
                 start=end+1
         o.close
     f.close()
-
-
-    
