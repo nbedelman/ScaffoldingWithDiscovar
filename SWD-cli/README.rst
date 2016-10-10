@@ -16,7 +16,7 @@ for a stronger filter, though, and we can be more confident in the result.
 
 ##PREPARING THE DATA###
 
-Start with  the output from a novel genome assembly (fasta), a scaffolded reference genome (fasta), and a map file for the reference genome (bed)
+Start with  the output from a novel genome assembly (fasta), a fasta file of reference genome scaffolds (fasta), and a map file for the reference genome (bed)
 
 Reference Genome Map:
 This should be in a bed format (see https://genome.ucsc.edu/FAQ/FAQformat#format1)
@@ -27,11 +27,10 @@ Chr1	1	73148	Hmel201001	500	+
 Chr1	73149	73248	Ns	500	+
 Chr1	73249	2694103	Hmel201002	1000	+
 
+*In this example, when the chromosome is built, each scaffold is separated by 100 Ns. This is accomplished by including an entry called Ns and including it between each scaffold. This is not necessary, and separation of scaffolds by Ns can be done in other ways as well. This particular method is not necessary for SWD to work.
+
 Reference Genome Sequence:
-This program uses as input a reference genome in fasta format, where each sequence is an entire chromosome. If your genome is 
-a fasta file that has a different entry for each scaffold, you will need to combine the scaffolds into chromosomes. To do this, 
-you can use the script 
-bedTools getFasta 
+
 
 Novel Genome Assembly:
 Only use contigs that have a length >= 1000 bp (removeSmallScaffolds.py)
