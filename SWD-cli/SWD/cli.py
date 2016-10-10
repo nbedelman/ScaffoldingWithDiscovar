@@ -73,11 +73,8 @@ arguments=parser.parse_args()
 ########### The genomeBuild Command ###########
 def genomeBuild(map, refGenome, config, asChroms):
     if not asChroms:
-        print "combining scaffolds into chromosomes"
-        chromGenome=refGenome.split(".")[0]+"_chroms.fa"
-        combCMD='''bedtools getfasta -s -name -fi %s -bed %s -fo %s ''' % (refGenome,map,chromGenome)
-        print combCMD
-        os.system(combCMD)
+        chromGenome=os.path.basename(refGenome).split(".")[0]+"_chroms.fa"
+        convertToChroms(map,refGenome, chromGenome)
         refGenome=chromGenome
     config=os.path.basename(config).split(".")[0]
     print "running lastdb with the following parameters:"
@@ -87,7 +84,33 @@ def genomeBuild(map, refGenome, config, asChroms):
     print "database name:", dbName
     cmd='''lastdb %s %s %s''' % (options,dbName,refGenome)
     print cmd
-    os.system(cmd)
+    # os.system(cmd)
+def convertToChroms(map,refGenome,chromGenome):
+        print "combining scaffolds into chromosomes"
+        convertBed=os.path.basename(refGenome).split(".")[0]+"_tmpmap.bed"
+        convertCMD='''awk -v OFS="\t" '{print $4,1,($3-$2)+1,$1,$5,$6}' %s > %s''' % (map,convertBed)
+        print convertCMD
+        os.system(convertCMD)
+        combCMD='''bedtools getfasta -s -name -fi %s -bed %s -fo %s''' % (refGenome,convertBed,chromGenome+"_tmp")
+        print combCMD
+        os.system(combCMD)
+        foldCMD='''fold -w 60 %s > %s ''' % (chromGenome+"_tmp", chromGenome+"_tmp2")
+        os.system(foldCMD)
+        #get rid of extra labels introduced in bedtools getfasta.
+        chroms=open(chromGenome+"_tmp2","r")
+        final=open(chromGenome,"w")
+        used=[]
+        for line in chroms:
+            if '>' in line:
+                if line not in used:
+                    used.append(line)
+                    final.write(line)
+            else:
+                final.write(line)
+        chroms.close()
+        final.close()
+        #clean up the tmp files
+        os.system('rm -f *tmp*')
 
 if arguments.which=='genomeBuild':
     genomeBuild(arguments.map, arguments.refGenome, arguments.config, arguments.asChroms)
