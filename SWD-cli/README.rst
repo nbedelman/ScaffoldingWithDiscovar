@@ -16,17 +16,22 @@ for a stronger filter, though, and we can be more confident in the result.
 
 ##PREPARING THE DATA###
 
-Start with  the output from a novel genome assembly (fasta), a scaffolded reference genome (fasta), and a map file for the reference genome (agp)
+Start with  the output from a novel genome assembly (fasta), a scaffolded reference genome (fasta), and a map file for the reference genome (bed)
 
 Reference Genome Map:
-This should be a tab-delimited file in the format:
-<chromosomeName>	<start>	<end>	<number>	<D/N>	<scaffoldName>	<1>	<length>	<strand>	<optional additional columns>
+This should be in a bed format (see https://genome.ucsc.edu/FAQ/FAQformat#format1)
 
+example:
+<chrom> <start> <stop>  <name>  <score> <strand>
+Chr1	1	73148	Hmel201001	500	+
+Chr1	73149	73248	Ns	500	+
+Chr1	73249	2694103	Hmel201002	1000	+
 
 Reference Genome Sequence:
 This program uses as input a reference genome in fasta format, where each sequence is an entire chromosome. If your genome is 
-a fasta file that has a different entry for each scaffold, you will need to combine the scaffolds into chromosome. To do this, 
-you can use SWD agpToFasta (uses the scripts agpToBedForFasta.py, and then bedtools getfasta).
+a fasta file that has a different entry for each scaffold, you will need to combine the scaffolds into chromosomes. To do this, 
+you can use the script 
+bedTools getFasta 
 
 Novel Genome Assembly:
 Only use contigs that have a length >= 1000 bp (removeSmallScaffolds.py)
