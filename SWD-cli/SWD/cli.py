@@ -2,9 +2,9 @@
 
 import argparse
 import os
-
+#
 from comms import reOrderScaffolds
-from comms import mafToBed
+from comms import mafToBed as m2b
 from comms import lastalOptions
 from comms import lastdbOptions
 
@@ -77,22 +77,22 @@ def genomeBuild(map, refGenome, config, asChroms):
         convertToChroms(map,refGenome, chromGenome)
         refGenome=chromGenome
     config=os.path.basename(config).split(".")[0]
-    print "running lastdb with the following parameters:"
-    print "config file:", config
+    print ("running lastdb with the following parameters:")
+    print ("config file:", config)
     options=lastdbOptions.getOptions(config)
     dbName=os.path.basename(refGenome).split(".")[0]+"db"
-    print "database name:", dbName
+    print ("database name:", dbName)
     cmd='''lastdb %s %s %s''' % (options,dbName,refGenome)
-    print cmd
-    # os.system(cmd)
+    print (cmd)
+    os.system("sbatch generalSlurm.slurm cmd")
 def convertToChroms(map,refGenome,chromGenome):
-        print "combining scaffolds into chromosomes"
+        print ("combining scaffolds into chromosomes")
         convertBed=os.path.basename(refGenome).split(".")[0]+"_tmpmap.bed"
         convertCMD='''awk -v OFS="\t" '{print $4,1,($3-$2)+1,$1,$5,$6}' %s > %s''' % (map,convertBed)
-        print convertCMD
+        print (convertCMD)
         os.system(convertCMD)
         combCMD='''bedtools getfasta -s -name -fi %s -bed %s -fo %s''' % (refGenome,convertBed,chromGenome+"_tmp")
-        print combCMD
+        print (combCMD)
         os.system(combCMD)
         foldCMD='''fold -w 60 %s > %s ''' % (chromGenome+"_tmp", chromGenome+"_tmp2")
         os.system(foldCMD)
@@ -119,11 +119,12 @@ if arguments.which=='genomeBuild':
 
 def lastAlign(config, refLoc, query):
     config=config.split("/")[-1].split(".")[0]
-    print config
+    print (config)
     options=lastalOptions.getOptions(config)
     cmd='''lastal %s %s %s''' % (options,refLoc,query)
-    print cmd
-    #os.system(cmd)
+    #cmd='''parallel-fastq "lastal %s %s " < %s ''' % (options,refLoc,query)
+    print (cmd)
+    os.system(cmd)
 
 if arguments.which=='lastAlign':
     lastAlign(arguments.config, arguments.refLoc, arguments.query)
@@ -140,7 +141,7 @@ if arguments.which=='reOrder':
 ##############The mafToBed Command
 
 def mafToBed(mafAlignment,discoOutput):
-    mafToBed.runAll(mafAlignment,discoOutput)
+    m2b.runAll(mafAlignment,discoOutput)
 
 if arguments.which=='mafToBed':
     mafToBed(arguments.alignment, arguments.assembly)

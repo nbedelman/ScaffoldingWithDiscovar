@@ -7,43 +7,43 @@ from Bio import SeqIO
 import sys
 from operator import itemgetter
 
-#mafAlignment=sys.argv[1]
-#discoOutput=sys.argv[2]
+# mafAlignment=sys.argv[1]
+# discoOutput=sys.argv[2]
 
 
 def addToBedList(bedList, scaf, chromStart,chromEnd,id,length,strand,contig,conStart):
 	'''takes a list of future bed entries, along with a number of attributes for a new entry.
 	Adds the new bed attributes as a bed-ordered list'''
-        bedList.append([scaf,chromStart-conStart,0,id,length,strand,chromStart,chromEnd,0])
+	bedList.append([scaf,chromStart-conStart,0,id,length,strand,chromStart,chromEnd,0])
 	if length > bedList[0][4]:
 		bedList[0]=[scaf,chromStart-conStart,0,contig,length,strand,chromStart,chromEnd,0]
 	return bedList
 
 class mafAttributes(object):
-    def __init__(self,mafLine):
-	line=mafLine.split()
-        try:
-            self.type=line[0]
-            self.label=line[1]
-            try:
-                self.start=int(line[2])
-            except ValueError:
-                self.start=0
-            try:
-                self.end=self.start+int(line[3])
-            except ValueError:
-                self.end=0
-            try:
-                self.strand=line[4]
-            except IndexError:
-                self.strand="NA"
-        except IndexError:
-            self.type="NA"
-            self.label="NA"
-            self.start="NA"
-            self.end="NA"
-            self.length="NA"
-            self.strand="NA"
+	def __init__(self,mafLine):
+		line=mafLine.split()
+		try:
+			self.type=line[0]
+			self.label=line[1]
+			try:
+				self.start=int(line[2])
+			except ValueError:
+				self.start=0
+			try:
+				self.end=self.start+int(line[3])
+			except ValueError:
+				self.end=0
+			try:
+				self.strand=line[4]
+			except IndexError:
+				self.strand="NA"
+		except IndexError:
+			self.type="NA"
+			self.label="NA"
+			self.start="NA"
+			self.end="NA"
+			self.length="NA"
+			self.strand="NA"
 
 	def getType(self):
 		return self.type
@@ -60,41 +60,43 @@ class mafAttributes(object):
 
 
 def mafToBedDict(mafFile):
-    '''  Takes a maf file (like the output of LAST
+	'''  Takes a maf file (like the output of LAST
 	outputs a dictionary. Each key is a different query contig;  the value for each is
 	a list of lists. Each single list contains ordered attributes to write to a bed file'''
-    conDict={}
-    current=[]
-    id=0
-    referenceStart=''
-    with open(mafFile, "r") as file:
-	for line in file:
-        #Skip all commented out lines -  there can be many at the beginning
-            if not "#" in line:
-                maf=mafAttributes(line)
-                if maf.getType()=='s':
-                    #Use the very first s line to define the reference pattern
-                    if referenceStart == '':
-                        referenceStart = maf.getLabel[:3]
-                    #For every other line, we can now distinguish between reference and non-reference sequences
-                    #Use the reference line in a block to define the reference chromosome name and position
-                    if  referenceStart in maf.getLabel():
-                        chrom=maf.getLabel()
-                        scaf=maf.getLabel()
-                        chromStart=maf.getStart()
-                        chromEnd=maf.getEnd()
-                        length=maf.getLength()
-                    #Use the query line to define the query name, position, and strand
-                    else:
-                        id += 1
-                        contig= maf.getLabel()
-                        if contig not in conDict.keys():
-                            conDict[contig] = [[0,0,0,0,0,0,0,0,0],]
-                            conStart= maf.getStart()
-                            conEnd= maf.getEnd()
-                            strand = maf.getStrand()
-                            conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
-    return conDict
+	conDict={}
+	current=[]
+	id=0
+	referenceStart=''
+	with open(mafFile, "r") as file:
+		#Skip all commented out lines -  there can be many at the beginning
+		for line in file:
+			if not "#" in line:
+				maf=mafAttributes(line)
+				if maf.getType()=='s':
+					#Use the very first s line to define the reference pattern
+					if referenceStart == '':
+						referenceStart = maf.getLabel()[:3]
+						#For every other line, we can now distinguish between reference and non-reference sequences
+						#Use the reference line in a block to define the reference chromosome name and position
+					if  referenceStart in maf.getLabel():
+						#chrom=maf.getLabel()
+						scaf=maf.getLabel()
+						chromStart=maf.getStart()
+						chromEnd=maf.getEnd()
+						length=maf.getLength()
+					#Use the query line to define the query name, position, and strand
+					else:
+						id += 1
+						contig = maf.getLabel()
+						if contig not in conDict.keys():
+							conDict[contig] = [[0,0,0,0,0,0,0,0,0],]
+							conStart= maf.getStart()
+							#conEnd= maf.getEnd()
+							strand = maf.getStrand()
+							conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
+						else:
+							conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
+	return conDict
 
 
 def capBestAlign(fastaEntry,bedEntry):
@@ -162,9 +164,9 @@ def getBests(bedList):
     return include
 
 def categorizeBest(include,allInside, sumLength, sumInside, sumChrom):
-    if len(include) == 2:
+    if (len(include) == 2) and (sumInside >= 750):
         return [1000,"0,204,0"]
-    elif allInside:
+    elif allInside and (sumInside >= 750):
         return [900, "128,255,0"]
     elif sumLength >= 1900:
         if len(include) == 3:
@@ -200,8 +202,8 @@ def writeToBed(bedList):
     for i in range(len(bedList)):
         toWrite=""
         for j in range(len(bedList[i])-1):
-            toWrite+=(str(bedList[i][j])+"\t")
-        toWrite+=(str(bedList[i][-1])+"\n")
+            toWrite+=(str(bedList[i][j])+" \t")
+        toWrite+=(str(bedList[i][-1])+" \n")
         f.write(toWrite)
     f.close()
 
@@ -212,4 +214,4 @@ def runAll(mafAlignment,discoOutput):
     for key in scoreDict.keys():
         writeToBed(scoreDict[key])
 
-#runAll(mafAlignment,discoOutput)
+# runAll(mafAlignment,discoOutput)
