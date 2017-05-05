@@ -20,7 +20,7 @@ class Segment(object):
         self.strand=atts[5]
         self.start=int(atts[6])
         self.end=int(atts[7])
-        self.color=atts[8].strip("\n") 
+        self.color=atts[8].strip("\n")
         self.overlap=[]
         self.contig=''
         self.isFlipped=False
@@ -32,7 +32,7 @@ class Segment(object):
             newOverlap=copy.copy(overlap)
             newOverlap.flipScaffold()
             newOverlaps.append(newOverlap)
-        self.overlap=newOverlaps  
+        self.overlap=newOverlaps
     def getOriginalStrand(self):
         return self.originalStrand
     def getConLength(self):
@@ -66,7 +66,7 @@ class Segment(object):
             else:
                 return '+'
         else:
-            return self.strand 
+            return self.strand
     def getRelStart(self):
         return self.relStart
     def getRelEnd(self):
@@ -82,11 +82,11 @@ class Segment(object):
             for scaffold in self.getOverlap():
                 if not scaffold.isFlipped:
                     return self.getStart()-scaffold.getStart()
-                else: 
+                else:
                     return scaffold.getEnd()-self.getEnd()
     def getScafEnd(self):
         if len(self.getOverlap()) > 1:
-            raise str(self.getName()), "overlaps at least two scaffolds..."
+            raise str(self.getName())+ "overlaps at least two scaffolds..."
         else:
             for scaffold in self.getOverlap():
                 if not scaffold.isFlipped:
@@ -103,14 +103,14 @@ class Segment(object):
             return self.getConLength() - (self.getRelEnd()-self.getEnd())
         else:
             return self.getConLength() - (self.getStart()-self.getRelStart())
-        
+
     def getDistanceFromScafStart(self):
         return self.getScafStart()
-    
+
     def getDistanceFromScafEnd(self):
         for i in self.getOverlap():
             return i.getLength()-self.getScafEnd()
-            
+
     def findOverlaps(self, scaffoldList):
         overlaps=[]
         for scaffold in scaffoldList:
@@ -142,14 +142,14 @@ class Segment(object):
             onlyOverlap=overlap[0]
             self.overlap=[onlyOverlap,]
             return [onlyOverlap,]
-        
+
     def getOverlap(self):
         return self.overlap
-     
+
     def checkIfUsed(self,aList, anObject):
         used=False
         for item in aList:
             if item.getName() == anObject.getName():
                 used=True
                 break
-        return used       
+        return used
