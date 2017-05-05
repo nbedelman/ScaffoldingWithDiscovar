@@ -14,41 +14,80 @@
 #SBATCH -o outs/lastal%A_%a.out # Standard output
 #SBATCH -e errs/lastal%A_%a.err # Standard error
 
-reference=$1
-speciesLoc=$2
-species=$3
-lastalConfig=$4
-discoData=$5
+export PATH=$PATH:/n/mallet_lab/edelman/software/kentUtils/bin
+export PATH=$PATH:/n/regal/mallet_lab/edelman/dryasAssembly/scripts
 
-mkdir -p $species
-mkdir -p $species/mafs
-mkdir -p $species/beds
-mkdir -p $species/sams
+config=$1
+source $config
 
-refLoc=$reference
-query=$speciesLoc/parts/*.part-${SLURM_ARRAY_TASK_ID}.fa
-alignOut=$species/mafs/$species.part-${SLURM_ARRAY_TASK_ID}_alns.maf
-samOut=$species/sams/$species.part-${SLURM_ARRAY_TASK_ID}_alns.sam
+#create the output directories
+mkdir -p $outBase
+mkdir -p $outBase/sizes
+mkdir -p $outBase/mafs
+mkdir -p $outBase/beds
+mkdir -p $outBase/net
+mkdir -p $outBase/chain
+mkdir -p $outBase/axt
+mkdir -p $outBase/twoBit
+mkdir -p $outBase/chainedAxt
+mkdir -p $outBase/chainedMaf
 
+
+query=$queryLoc/*.part-${SLURM_ARRAY_TASK_ID}.fa
+alignOut=$outBase/mafs/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns.maf
+referenceSize=$outBase/sizes/$(basename $referenceAssembly).size
+querySize=$outBase/sizes/$(basename $queryAssembly).size
+referenceTwoBit=$outBase/twoBit/$(basename $referenceAssembly).2bit
+queryTwoBit=$outBase/twoBit/$(basename $queryAssembly).2bit
+axtOut=$outBase/axt/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns.axt
+axtSorted=$outBase/axt/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted.axt
+chainOut=$outBase/chain/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted.chain
+refNetOut=$outBase/net/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_ref.net
+queryNetOut=$outBase/net/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_query.net
+chainedAxtOut=$outBase/chainedAxt/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained.axt
+chainedMafOut=$outBase/chainedMaf/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained.maf
 
 #find local alignments between query sequences and reference sequences
-SWD lastAlign $refLoc $query $lastalConfig | maf-sort.sh > $alignOut
-#maf-convert.py sam $alignOut > $samOut
+SWD lastAlign $referenceDB $query $lastalConfig | maf-sort.sh > $alignOut
+
+#follow the chain and net protocol; modified from  http://genomewiki.ucsc.edu/index.php/Whole_genome_alignment_howto
+#first, make the genome sizes file if they don't exist
+if [ ! -f $referenceSize ]; then
+    faSize $referenceAssembly -detailed > $referenceSize
+    faSize $queryAssembly -detailed > $querySize
+fi
+#then, convert the genomes to 2bit format if that hasn't happened yet
+if [ ! -f $referenceTwoBit ]; then
+    faToTwoBit $referenceAssembly $referenceTwoBit
+    faSize $queryAssembly $queryTwoBit
+fi
+#convert the last output to axt
+maf-convert.py axt $alignOut > $axtOut
+#sort the axt
+axtSort $axtOut > $axtSorted
+#make chains
+axtChain -linearGap=medium -scoreScheme=$scoreScheme $axtSorted $referenceTwoBit $queryTwoBit $chainOut
+#make nets
+chainNet $chainOut $referenceSize $querySize $refNetOut $queryNetOut
+#convert the net back into axt
+netToAxt -maxGap=300 $refNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtOut
+#sort and convert the chained axt back into maf
+axtSort $chainedAxtOut  > $chainedAxtOut.sorted.axt
+axtToMaf $chainedAxtOut.sorted.axt $chainedMafOut
 
 ##Make a folder in which to put the bed files for each contig; then make the files
-mkdir $species/beds/${SLURM_ARRAY_TASK_ID}_tmp
-cd $species/beds/${SLURM_ARRAY_TASK_ID}_tmp
+mkdir $outBase/beds/${SLURM_ARRAY_TASK_ID}_tmp
+cd $outBase/beds/${SLURM_ARRAY_TASK_ID}_tmp
 
-SWD mafToBed ../../../$alignOut ../../../$discoData
-#mafToBed.py ../../../$alignOut $discoData
+SWD mafToBed ../../../$chainedMafOut ../../../$queryAssembly
 
 #put a copy of each bed file in the general bed folder, and concatenate into the allContigs file.
 #Also put the overviews into the allOverviews file. Then get rid of the temporary folder.
 for i in *.bed
 do cp $i ../$i
 cat $i >> ${SLURM_ARRAY_TASK_ID}.bed
-tail -n +2 $i >> ../$species\_allContigs.bed
-head -n 1 $i >> ../$species\_allOverviews.bed
+tail -n +2 $i >> ../$outBase\_allContigs.bed
+head -n 1 $i >> ../$outBase\_allOverviews.bed
 done
 
 cd ..

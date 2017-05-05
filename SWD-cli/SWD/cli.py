@@ -123,7 +123,7 @@ def lastAlign(config, refLoc, query):
     options=lastalOptions.getOptions(config)
     cmd='''lastal %s %s %s''' % (options,refLoc,query)
     #cmd='''parallel-fastq "lastal %s %s " < %s ''' % (options,refLoc,query)
-    print (cmd)
+    #print (cmd)
     os.system(cmd)
 
 if arguments.which=='lastAlign':
