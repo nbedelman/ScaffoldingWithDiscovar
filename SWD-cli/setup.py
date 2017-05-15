@@ -61,10 +61,11 @@ setup(
     extras_require = {
         'test': ['coverage', 'pytest', 'pytest-cov'],
     },
-    entry_points = {
-        'console_scripts': [
-            'SWD=SWD.cli:main',
-        ],
-    },
+    scripts=['SWD/SWD.py'],
+    # entry_points = {
+    #     'console_scripts': [
+    #         'SWD=scaffoldingWithDiscovar:main',
+    #     ],
+    # },
     cmdclass = {'test': RunTests},
 )

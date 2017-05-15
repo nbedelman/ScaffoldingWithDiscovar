@@ -56,11 +56,18 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMe
         print ("writing output")
         print (chromosome.getName())
         chromosome.makeAllGroups()
+        print ("made all groups")
+        num=0
         for group in chromosome.getGroups():
+            print ("group num ",num)
+            num+=1
             group.makeSuperScaffolds()
+            print("made super scaffolds")
         chromosome.combineGroups(combineMethod)
+        print("combined groups")
         chromosome.writeOverviewResults()
-        chromosome.writeFasta(originalGenome, discovarAssembly)
+        print("wrote results")
+        # chromosome.writeFasta(originalGenome, discovarAssembly)
         print ("done")
     print ("COMPLETED")
     return chromosomes

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-#updated june 27, 2016
+#updated May 11, 2017
+#updates include: score category 6 is not >50% in chrom instead of 75%
 #Nate Edelman
 
 from Bio import SeqIO
@@ -95,6 +96,8 @@ def mafToBedDict(mafFile):
 							strand = maf.getStrand()
 							conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
 						else:
+							conStart= maf.getStart()
+							strand = maf.getStrand()
 							conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
 	return conDict
 
@@ -129,6 +132,8 @@ def getBests(bedList):
     chrom=best[0]
     conStart=best[1]
     conEnd=best[2]
+    conLength=abs(best[2]-best[1])
+    insideCutoff=float(conLength)/20
     include=[best,]
     allInside=True
     sumChrom=0
@@ -141,7 +146,7 @@ def getBests(bedList):
             sumLength += sort[entry][4]
             if sort[entry][0] == chrom:
                 sumChrom += sort[entry][4]
-                if ((sort[entry][1] - conStart) < -250) or ((sort[entry][2] - conEnd) > 250):
+                if (abs((sort[entry][1] - conStart)) > insideCutoff) or ((sort[entry][2] - conEnd) > insideCutoff):
                     allInside = False
                 else:
                     sumInside += sort[entry][4]
@@ -179,7 +184,7 @@ def categorizeBest(include,allInside, sumLength, sumInside, sumChrom):
         return [800,"255,255,0"]
     elif sumInside>=500:
         return [700,"255,153,51"]
-    elif sumChrom >= 750:
+    elif sumChrom >= 500:
         return [600, "255,102,102"]
     else:
         return [500, "204,0,0"]
