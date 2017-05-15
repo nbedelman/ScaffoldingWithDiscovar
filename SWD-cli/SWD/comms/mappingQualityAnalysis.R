@@ -12,7 +12,7 @@ aligns=read.delim(f,sep="\t", header=F,col.names=c("Chr","ConStart","ConEnd","ID
 
 #make a data frame that has the name of each category and the number of contigs that
 #fall into that category
-categories=c(">5XDup","<=5XDup","2XDup","BAD",">50% Chrom",
+categories=c(">5XDup","<=5XDup","2XDup","<50% Chrom",">50% Chrom",
              ">50% Inside",">75% Inside","All Inside","Unique Map")
 summary  <- data.frame(labels=categories)
 numContigs=c()
@@ -59,7 +59,7 @@ getStats  <- function(aSubset){
 }
 
 #run the above function on each size category, and put the results in a data frame.
-allStats=data.frame(labels=c(">5XDup","<=5XDup","2XDup","BAD",">50% Chrom",">50% Inside",">75% Inside","All Inside","Unique Map"))
+allStats=data.frame(labels=c(">5XDup","<=5XDup","2XDup","<50% Chrom",">50% Chrom",">50% Inside",">75% Inside","All Inside","Unique Map"))
 for (size in seq(1,length(sizes))){
   assign("x",getStats(sizes[[size]]))
   allStats=cbind(allStats,x)
@@ -99,13 +99,13 @@ cumLength=append(cumLength,0)
 categories=append(categories,"End",after=0)
 cumulScores=data.frame(x=categories,y=cumLength)
 
-cumulScores$x<-factor(cumulScores$x,levels=c("Unique Map","All Inside",">75% Inside",">50% Inside",">50% Chrom","BAD","2XDup","<=5XDup",">5XDup","End"))
+cumulScores$x<-factor(cumulScores$x,levels=c("Unique Map","All Inside",">75% Inside",">50% Inside",">50% Chrom","<50% Chrom","2XDup","<=5XDup",">5XDup","End"))
 
 colors2a=append(rev(colors),"darkblue")
 ggplot(data=cumulScores, aes(x=x, y=y, group=1)) +
   geom_line(aes(color=x), size=3)+ scale_color_manual(values=colors2a) +
   xlab("Map Quality") + ylab("Cumulative Length") + 
-  geom_hline(aes(yintercept=2.76e+08),linetype="dashed") +
+  #geom_hline(aes(yintercept=2.76e+08),linetype="dashed") +
   labs(list(title=paste0(base," cumulative length by quality"),x = "quality", y="length"))#+
   #theme(legend.position="none")
 ggsave(paste0(base,"_LineGraph.pdf"),width = 11,height = 8.5)
