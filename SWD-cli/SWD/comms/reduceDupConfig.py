@@ -33,6 +33,18 @@ repeatHandling="01"
 #-p Name
 scoreMatrix="ATMAP"
 
+#Maximum number of gapless alignments per query position. When lastal extends gapless alignments from initial matches that start at one query position, if it gets COUNT successful extensions, it skips any remaining initial matches starting at that position.
+#-n Count
+alignPerQueryPosition=None
+
+#Before extending gapped alignments, discard any gapless alignment whose query range lies in LIMIT or more others (for the same strand and volume) with higher score-per-length. This can reduce run time and output size (MC Frith & R Kawaguchi 2015, Genome Biol 16:106).
+#-C Limit
+numOverlapExtend=None
+
+#Omit any alignment whose query range lies in LIMIT or more other alignments with higher score (and on the same strand). This is a useful way to get just the top few hits to each part of each query (P Berman et al. 2000, J Comput Biol 7:293-302).
+#-K Limit
+numOverlapQuery=2
+
 #####################
 ###E-VALUE OPTIONS###
 #####################
@@ -120,17 +132,11 @@ queryStrand=None
 #-S Number
 dnaStrand=None
 
-#Omit any alignment whose query range lies in LIMIT or more other alignments with higher score (and on the same strand). This is a useful way to get just the top few hits to each part of each query (P Berman et al. 2000, J Comput Biol 7:293-302).
-#-K Limit
-numOverlapQuery=None
 
-#Before extending gapped alignments, discard any gapless alignment whose query range lies in LIMIT or more others (for the same strand and volume) with higher score-per-length. This can reduce run time and output size (MC Frith & R Kawaguchi 2015, Genome Biol 16:106).
-#-C Limit
-numOverlapExtend=None
 
 #Divide the work between this number of threads running in parallel. 0 means use as many threads as your computer claims it can handle simultaneously. Single query sequences are not divided between threads, so you need multiple queries per batch for this option to take effect.
 #-P Threads
-numThreads=16
+numThreads=None
 
 #Search queries in batches of at most this many bytes. If a single sequence exceeds this amount, however, it is not split. You can use suffixes K, M, and G to specify KibiBytes, MebiBytes, and GibiBytes. This option has no effect on the results (apart from their order).
 #If the reference was split into volumes by lastdb, then each volume will be read into memory once per query batch.
@@ -150,9 +156,6 @@ minDiffAligns=None
 #-T Number
 alignType=None
 
-#Maximum number of gapless alignments per query position. When lastal extends gapless alignments from initial matches that start at one query position, if it gets COUNT successful extensions, it skips any remaining initial matches starting at that position.
-#-n Count
-alignPerQueryPosition=None
 
 #Specify treatment of lowercase letters when extending alignments:
 #0. Mask them for neither gapless nor gapped extensions.

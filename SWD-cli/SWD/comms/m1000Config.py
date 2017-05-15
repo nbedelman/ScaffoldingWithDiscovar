@@ -10,7 +10,7 @@
 #Maximum multiplicity for initial matches. Each initial match is lengthened until it occurs at most this many times in the reference.
 #If the reference was split into volumes by lastdb, then lastal uses one volume at a time. The maximum multiplicity then applies to each volume, not the whole reference. This is why voluming changes the results.
 #-m multiplicity
-multiplicity=100
+multiplicity=1000
 
 #Minimum alignment score. (If you do gapless alignment with option -j1, then -d and -e mean the same thing. If you set both, -e will prevail.)
 #Initial-match options
@@ -130,7 +130,7 @@ numOverlapExtend=None
 
 #Divide the work between this number of threads running in parallel. 0 means use as many threads as your computer claims it can handle simultaneously. Single query sequences are not divided between threads, so you need multiple queries per batch for this option to take effect.
 #-P Threads
-numThreads=16
+numThreads=None
 
 #Search queries in batches of at most this many bytes. If a single sequence exceeds this amount, however, it is not split. You can use suffixes K, M, and G to specify KibiBytes, MebiBytes, and GibiBytes. This option has no effect on the results (apart from their order).
 #If the reference was split into volumes by lastdb, then each volume will be read into memory once per query batch.

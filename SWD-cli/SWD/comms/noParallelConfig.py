@@ -130,7 +130,7 @@ numOverlapExtend=None
 
 #Divide the work between this number of threads running in parallel. 0 means use as many threads as your computer claims it can handle simultaneously. Single query sequences are not divided between threads, so you need multiple queries per batch for this option to take effect.
 #-P Threads
-numThreads=16
+numThreads=None
 
 #Search queries in batches of at most this many bytes. If a single sequence exceeds this amount, however, it is not split. You can use suffixes K, M, and G to specify KibiBytes, MebiBytes, and GibiBytes. This option has no effect on the results (apart from their order).
 #If the reference was split into volumes by lastdb, then each volume will be read into memory once per query batch.

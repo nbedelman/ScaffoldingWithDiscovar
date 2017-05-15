@@ -59,13 +59,15 @@ parser_mafToBed.add_argument('assembly',type=str,
 parser_mafToBed.set_defaults(which='mafToBed')
 
 #overviewToIntersects subParser
-parser_mafToBed=subparsers.add_parser('overviewToIntersects',help='overviewToIntersects help')
-parser_mafToBed.add_argument('overview',type=str,
+parser_overviewToIntersects=subparsers.add_parser('overviewToIntersects',help='overviewToIntersects help')
+parser_overviewToIntersects.add_argument('overview',type=str,
                             help='path to overview bed file - should be \
                             something like <species>_allOverviews.bed')
-parser_mafToBed.add_argument('map',type=str,
-                             help='path to new assembly in fasta format')
-parser_mafToBed.set_defaults(which='mafToBed')
+parser_overviewToIntersects.add_argument('map',type=str,
+                             help='path to map file in bed format')
+parser_overviewToIntersects.add_argument('bedDirectory',type=str,
+                             help='path to directory with all bed formats')
+parser_overviewToIntersects.set_defaults(which='overviewToIntersects')
 
 #Whichever parser was used, parse the arguments
 arguments=parser.parse_args()
@@ -123,20 +125,11 @@ def lastAlign(config, refLoc, query):
     options=lastalOptions.getOptions(config)
     cmd='''lastal %s %s %s''' % (options,refLoc,query)
     #cmd='''parallel-fastq "lastal %s %s " < %s ''' % (options,refLoc,query)
-    #print (cmd)
+    print (cmd)
     os.system(cmd)
 
 if arguments.which=='lastAlign':
     lastAlign(arguments.config, arguments.refLoc, arguments.query)
-
-#############The reOrderScaffolds Command#############
-
-def reOrder(bedDirectory,map,refGenome,newAssembly):
-	reOrderScaffolds.runAll(bedDirectory,map,refGenome,newAssembly)
-
-if arguments.which=='reOrder':
-	reOrder(arguments.bedDirectory,arguments.map,arguments.refGenome,arguments.newAssembly)
-
 
 ##############The mafToBed Command
 
@@ -145,3 +138,19 @@ def mafToBed(mafAlignment,discoOutput):
 
 if arguments.which=='mafToBed':
     mafToBed(arguments.alignment, arguments.assembly)
+
+#############The overviewToIntersects Command#############
+def O2I(bedFile,mafFile,bedDir):
+    cmd='''overviewToIntersects.sh %s %s %s ''' % (bedFile,mafFile,bedDir)
+    os.system(cmd)
+
+if arguments.which=='overviewToIntersects':
+    O2I(arguments.overview, arguments.map, arguments.bedDirectory)
+
+#############The reOrderScaffolds Command#############
+
+def reOrder(bedDirectory,map,refGenome,newAssembly):
+	reOrderScaffolds.runAll(bedDirectory,map,refGenome,newAssembly)
+
+if arguments.which=='reOrder':
+	reOrder(arguments.bedDirectory,arguments.map,arguments.refGenome,arguments.newAssembly)

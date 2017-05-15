@@ -2,7 +2,7 @@
 import sys
 
 def getOptions(configFile):
-    module = __import__(configFile, globals(), locals(), [], -1)
+    module = __import__(configFile, globals(), locals(), [], 0)
     lastalDict={"-D":module.alignExpect,
     "-E":module.maxEG2,
     "-r":module.matchScore,
@@ -22,10 +22,10 @@ def getOptions(configFile):
     "-l":module.minInitMatchLength,
     "-L":module.maxInitMatchLength,
     "-k":module.searchStep,
+    "-K":module.numOverlapQuery,
     "-W":module.minQuerySize,
     "-s":module.queryStrand,
     "-S":module.dnaStrand,
-    "-K":module.numOverlapQuery,
     "-C":module.numOverlapExtend,
     "-P":module.numThreads,
     "-i":module.batchSize,
@@ -40,12 +40,10 @@ def getOptions(configFile):
     "-g":module.gammaVal,
     "-j":module.output,
     "-Q":module.qualityTreatment}
-    
+
     optionString=''
     for k in lastalDict.keys():
         if lastalDict[k]:
             #print k,lastalDict[k],
             optionString+=('''%s %s ''' % (k,lastalDict[k]))
     return optionString
-
-
