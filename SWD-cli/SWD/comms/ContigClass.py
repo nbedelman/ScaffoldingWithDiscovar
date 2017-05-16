@@ -10,6 +10,7 @@ from SegmentClass import *
 from ErrorClasses import *
 
 class Contig(object):
+    ungroupedChrom=''
     def __init__(self,bedFile):
         f= open(bedFile,"r")
         atts=f.readline().split("\t")
@@ -60,21 +61,23 @@ class Contig(object):
     def getInOrEx(self):
         return self.inOrEx
     def cullSegments(self):
-        if self.getChrom() != "Hmel200":
+        #!!!!!Made a quick fix because mapping was off for ungrouped chrom! remove # from line 74 when fixed.
+        chrom=''
+        if self.getChrom() != self.ungroupedChrom:
             chrom=self.getChrom()
         else:
             for segment in self.getAllSegments():
-                if segment.getChrom() != "Hmel200":
+                if segment.getChrom() != self.ungroupedChrom:
                     chrom = segment.getChrom()
                     break
         for segment in self.getAllSegments():
-            if segment.getChrom() == chrom or segment.getChrom() == "Hmel200":
+            if segment.getChrom() == chrom:# or segment.getChrom() == self.ungroupedChrom:
                 duplicateSeg=False
                 for goodSeg in self.getGoodSegments():
                     if goodSeg.getName() == segment.getName():
                         duplicateSeg=True
                         break
-                if duplicateSeg == False:        
+                if (duplicateSeg == False):        
                     self.goodSegments.append(segment)
                 
     def getConnectors(self):
@@ -83,20 +86,19 @@ class Contig(object):
     def combineSegments(self):
         if self.getGoodSegments() == []:
             raise NoSegmentError("Remember to cull segments before combining!")
-        elif len(self.getGoodSegments()) ==1:
-            raise NotInformativeError("After culling, this contig no longer maps to two scaffolds")
+        #elif len(self.getGoodSegments()) ==1:
+        #    raise NotInformativeError("After culling, this contig no longer maps to two scaffolds")
         else:
-            #print "before sending to combinedSegments, length of goodSegments should be 6. is: ", len(self.getGoodSegments())
             orderedSegs=self.orderSegs(self.getGoodSegments())
             combinedSegs=self.combineLists(orderedSegs)
-            if len(combinedSegs) == 1:
-                raise NotInformativeError("After combining, this contig no longer maps to two scaffolds")
-            else:
-                longEnough=[]
-                for seg in combinedSegs:
-                    if seg.getConEnd()-seg.getConStart() > 1000:
-                        longEnough.append(seg)
-                self.combinedSegments=longEnough
+            #if len(combinedSegs) == 1:
+            #    raise NotInformativeError("After combining, this contig no longer maps to two scaffolds")
+            #else:
+            longEnough=[]
+            for seg in combinedSegs:
+                if seg.getConEnd()-seg.getConStart() > 1000:
+                    longEnough.append(seg)
+            self.combinedSegments=longEnough
     def outputBed(self, segList, fileName):
         with open(fileName, "w") as o:
             for segment in segList:
@@ -129,29 +131,21 @@ class Contig(object):
             
         
     def combineLists(self, goodSegs):
-        #print goodSegs[4].getEnd()
         combined=[]
         goodIndices=[]
         for i in (range(len(goodSegs)-1)):
             j=goodSegs[i]
             k=goodSegs[i+1]
-            #print "trying indices: ", i, i+1
             out = self.tryCombining(j,k)
-            #print "completed"
             if out:
-                #print "combined indices " , i, i+1
                 goodIndices+=i,i+1
-                #print "now, good indices are: ", goodIndices
                 combined.append(out)
         for l in range(len(goodSegs)):
             if not l in goodIndices:
                 combined.append(goodSegs[l])
-                #print "not able to use ", l , "so put it in on its own"
-        #print "after full go-through, len(goodSegs = ", len(goodSegs), "len(combined) = ", len(combined)
         if len(goodSegs) == len(combined):
             return goodSegs 
         else:
-            #self.outputBed(combined, "intermediate.bed")
             return self.combineLists(combined)
 
                             
@@ -184,3 +178,14 @@ class Contig(object):
                 return True
         else:
             return False
+    def getLengthInScaffold(self,scaffoldName):
+        '''outputs an integer of how many bases of the contig map to the scaffold'''
+        connectorNames=[s.getName() for s in self.getConnectors()]
+        if scaffoldName not in connectorNames:
+            return 0
+        else:
+            totalLength=0
+            for seg in self.getGoodSegments():
+                if seg.getOverlap()[0].getName() == scaffoldName:
+                    totalLength+=seg.getLength()
+            return totalLength
