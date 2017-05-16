@@ -11,6 +11,14 @@ from operator import itemgetter
 # mafAlignment=sys.argv[1]
 # discoOutput=sys.argv[2]
 
+# def makeSizeDict(discoOutput):
+# 	lenDict={}
+# 	g=SeqIO.parse(discoOutput, "fasta")
+# 	for record in g:
+# 		lenDict[record.id]=len(record)
+# 	return lenDict
+
+
 
 def addToBedList(bedList, scaf, chromStart,chromEnd,id,length,strand,contig,conStart):
 	'''takes a list of future bed entries, along with a number of attributes for a new entry.
@@ -92,7 +100,6 @@ def mafToBedDict(mafFile):
 						if contig not in conDict.keys():
 							conDict[contig] = [[0,0,0,0,0,0,0,0,0],]
 							conStart= maf.getStart()
-							#conEnd= maf.getEnd()
 							strand = maf.getStrand()
 							conDict[contig]=addToBedList(conDict[contig],scaf, chromStart,chromEnd,id,length,strand,contig,conStart)
 						else:
@@ -103,10 +110,10 @@ def mafToBedDict(mafFile):
 
 
 def capBestAlign(fastaEntry,bedEntry):
-    '''takes a specially-formatted bed-type entry and the fasta file that was used as its query
-    returns a bed file where the entire query is placed relative to its best match Useful for visualizing alignments with IGV as well as properly re-ordering the scaffolds.'''
-    bedEntry[2] = len(fastaEntry) + bedEntry[1]
-    return bedEntry
+	'''takes a specially-formatted bed-type entry and the fasta file that was used as its query
+	returns a bed file where the entire query is placed relative to its best match Useful for visualizing alignments with IGV as well as properly re-ordering the scaffolds.'''
+	bedEntry[2] = len(fastaEntry) + bedEntry[1]
+	return bedEntry
 
 def scoreAlign(record,entry):
     '''takes an alignment and the original query sequence.
@@ -203,20 +210,21 @@ def scoreAll(discoOutput,conDict):
 
 def writeToBed(bedList):
     name=bedList[0][3]
-    f=open(name+".bed", "a+")
+    f=open(name+".bed", "w")
     for i in range(len(bedList)):
         toWrite=""
         for j in range(len(bedList[i])-1):
-            toWrite+=(str(bedList[i][j])+" \t")
-        toWrite+=(str(bedList[i][-1])+" \n")
+            toWrite+=(str(bedList[i][j])+"\t")
+        toWrite+=(str(bedList[i][-1])+"\n")
         f.write(toWrite)
     f.close()
 
 
 def runAll(mafAlignment,discoOutput):
-    conDict = mafToBedDict(mafAlignment)
-    scoreDict = scoreAll(discoOutput,conDict)
-    for key in scoreDict.keys():
-        writeToBed(scoreDict[key])
+	# discoLengths = makeSizeDict(discoOutput)
+	conDict = mafToBedDict(mafAlignment)#, discoLengths)
+	scoreDict = scoreAll(discoOutput,conDict)
+	for key in scoreDict.keys():
+		writeToBed(scoreDict[key])
 
 # runAll(mafAlignment,discoOutput)

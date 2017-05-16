@@ -58,11 +58,8 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMe
         chromosome.makeAllGroups()
         print ("made all groups")
         num=0
-        for group in chromosome.getGroups():
-            print ("group num ",num)
-            num+=1
-            group.makeSuperScaffolds()
-            print("made super scaffolds")
+        for group in range(len(chromosome.getGroups())):
+            chromosome.getGroups()[group].makeSuperScaffolds()
         chromosome.combineGroups(combineMethod)
         print("combined groups")
         chromosome.writeOverviewResults()

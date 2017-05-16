@@ -9,7 +9,7 @@
 #SBATCH -J lastal         # A single job name for the array
 #SBATCH -p serial_requeue # Partition
 #SBATCH -n 8             # eight cores
-#SBATCH -t 2-00:00         # Running time of 2 days
+#SBATCH -t 0-01:00         # Running time of 2 days
 #SBATCH --mem 5000        # Memory request of 2 GB
 #SBATCH -o outs/lastal%A_%a.out # Standard output
 #SBATCH -e errs/lastal%A_%a.err # Standard error
@@ -50,42 +50,42 @@ chainedMafRefOut=$outBase/chainedMaf/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_s
 chainedMafQuerOut=$outBase/chainedMaf/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained_quer.maf
 
 #find local alignments between query sequences and reference sequences
-SWD.py lastAlign $referenceDB $query $lastalConfig | maf-sort.sh > $alignOut
+# SWD.py lastAlign $referenceDB $query $lastalConfig | maf-sort.sh > $alignOut
+#
+# #follow the chain and net protocol; modified from  http://genomewiki.ucsc.edu/index.php/Whole_genome_alignment_howto
+# #first, make the genome sizes file if they don't exist
+# if [ ! -f $referenceSize ]; then
+#     faSize $referenceAssembly -detailed > $referenceSize
+# fi
+# if [ ! -f $querySize ]; then
+#     faSize $queryAssembly -detailed > $querySize
+# fi
+#
+# #then, convert the genomes to 2bit format if that hasn't happened yet
+# if [ ! -f $referenceTwoBit ]; then
+#     faToTwoBit $referenceAssembly $referenceTwoBit
+# fi
+# if [ ! -f $queryTwoBit ]; then
+#     faToTwoBit $queryAssembly $queryTwoBit
+# fi
+# #convert the last output to axt
+# maf-convert axt $alignOut > $axtOut
+# #sort the axt
+# axtSort $axtOut $axtSorted
+# #make chains
+# axtChain -linearGap=medium -scoreScheme=$scoreScheme $axtSorted $referenceTwoBit $queryTwoBit $chainOut
+# #make nets
+# chainNet $chainOut $referenceSize $querySize $refNetOut $queryNetOut
+# #convert the net back into axt
+# netToAxt -maxGap=300 $refNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtRefOut
+# netToAxt -maxGap=300 $queryNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtQuerOut
+# #sort and convert the chained axt back into maf
+# axtSort $chainedAxtRefOut  $chainedAxtRefOut.sorted.axt
+# axtSort $chainedAxtQuerOut  $chainedAxtQuerOut.sorted.axt
+# axtToMaf $chainedAxtRefOut.sorted.axt $referenceSize $querySize  $chainedMafRefOut
+# axtToMaf $chainedAxtQuerOut.sorted.axt $querySize $referenceSize  $chainedMafQuerOut
 
-#follow the chain and net protocol; modified from  http://genomewiki.ucsc.edu/index.php/Whole_genome_alignment_howto
-#first, make the genome sizes file if they don't exist
-if [ ! -f $referenceSize ]; then
-    faSize $referenceAssembly -detailed > $referenceSize
-fi
-if [ ! -f $querySize ]; then
-    faSize $queryAssembly -detailed > $querySize
-fi
-
-#then, convert the genomes to 2bit format if that hasn't happened yet
-if [ ! -f $referenceTwoBit ]; then
-    faToTwoBit $referenceAssembly $referenceTwoBit
-fi
-if [ ! -f $queryTwoBit ]; then
-    faToTwoBit $queryAssembly $queryTwoBit
-fi
-#convert the last output to axt
-maf-convert axt $alignOut > $axtOut
-#sort the axt
-axtSort $axtOut $axtSorted
-#make chains
-axtChain -linearGap=medium -scoreScheme=$scoreScheme $axtSorted $referenceTwoBit $queryTwoBit $chainOut
-#make nets
-chainNet $chainOut $referenceSize $querySize $refNetOut $queryNetOut
-#convert the net back into axt
-netToAxt -maxGap=300 $refNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtRefOut
-netToAxt -maxGap=300 $queryNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtQuerOut
-#sort and convert the chained axt back into maf
-axtSort $chainedAxtRefOut  $chainedAxtRefOut.sorted.axt
-axtSort $chainedAxtQuerOut  $chainedAxtQuerOut.sorted.axt
-axtToMaf $chainedAxtRefOut.sorted.axt $referenceSize $querySize  $chainedMafRefOut
-axtToMaf $chainedAxtQuerOut.sorted.axt $querySize $referenceSize  $chainedMafQuerOut
-
-##Make a folder in which to put the bed files for each contig; then make the files
+# ##Make a folder in which to put the bed files for each contig; then make the files
 mkdir -p $outBase/beds/${SLURM_ARRAY_TASK_ID}_tmp
 cd $outBase/beds/${SLURM_ARRAY_TASK_ID}_tmp
 
