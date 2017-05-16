@@ -16,7 +16,7 @@ from PartClass import *
 from GroupClass import *
 from ErrorClasses import *
 
-def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMethod="first", reportDirectory=None):
+def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungroupedChrom='', combineMethod="first", reportDirectory=None):
     '''runs the full program.
     Takes:
         bedDirectory: a directory containing a bed file for each discovar contig's alignment to genome
@@ -32,6 +32,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMe
         *fixed.fasta: fasta file with the result of using discovar to join reference scaffolds
     '''
     print ("reading contigs")
+    Contig.ungroupedChrom=ungroupedChrom
     rawContigs=readAllContigs(bedDirectory, reportDirectory)
     print ("done")
     print ("culling extraneous contig sub-alignments")
@@ -57,17 +58,14 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, combineMe
         print (chromosome.getName())
         chromosome.makeAllGroups()
         print ("made all groups")
-        num=0
-        for group in chromosome.getGroups():
-            print ("group num ",num)
-            num+=1
-            group.makeSuperScaffolds()
-            print("made super scaffolds")
+        numGroups=len(chromosome.getGroups())
+        for group in range(numGroups):
+            chromosome.getGroups()[group].makeSuperScaffolds()
         chromosome.combineGroups(combineMethod)
         print("combined groups")
         chromosome.writeOverviewResults()
         print("wrote results")
-        # chromosome.writeFasta(originalGenome, discovarAssembly)
+        chromosome.writeFasta(originalGenome, discovarAssembly)
         print ("done")
     print ("COMPLETED")
     return chromosomes
@@ -103,7 +101,7 @@ def readAllContigs(directory, reportDirectory):
     return contigs
 
 def cullSegments(contigList):
-    '''small script to loop through each contig and get rid of extraneous alignemtns'''
+    '''small script to loop through each contig and get rid of extraneous aligments'''
     for i in contigList:
         i.cullSegments()
     return
@@ -116,6 +114,8 @@ def combineSegments(contigList):
             i.combineSegments()
             combined.append(i)
         except NotInformativeError:
+            pass
+        except NoSegmentError:
             pass
     return combined
 

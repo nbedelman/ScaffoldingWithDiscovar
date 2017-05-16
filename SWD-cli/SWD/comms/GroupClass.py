@@ -118,6 +118,45 @@ class Group(object):
         
         
     def joinFullContig(self,contig):
+        if len(contig.getConnectors())==1:
+            return self.singleScaffold(contig)
+        else:
+            return self.joinScaffolds(contig)
+    
+    def singleScaffold(self, contig):
+        '''if the contig only matches a single scaffold, is a good match, and extends
+        past the length of the scaffold, add the excess to the scaffold'''
+        #first, see what percent of the contig is actually inside the scaffold. 
+        #we can add tuning parameters based on these numbers.
+        lengthInside=contig.getLengthInScaffold(contig.getConnectors()[0].getName())
+        pctInside=float(lengthInside)/contig.getLength()
+        if (pctInside>.5) and (lengthInside > 2000):
+            return self.extendScaffold(contig)
+        else:
+            #if the contig does not meet the requirements, just send it to the join pathway
+            #which will return a superScaffold of the original scaffold properly formatted.
+            return self.joinScaffolds(contig)
+            
+    def extendScaffold(self,contig):
+        orderedSegs=contig.orderSegs(contig.getGoodSegments())
+        middlePart=[(contig.getConnectors()[0], 1, contig.getConnectors()[0].getLength(), contig.getConnectors()[0].getStrand()),]
+        if orderedSegs[0].getDistanceFromScafStart() < orderedSegs[0].getConStart():
+            firstPart=[(contig,1,orderedSegs[0].getConStart()-orderedSegs[0].getDistanceFromScafStart(),contig.getStrand()),]
+        else:
+            firstPart=[]
+        if orderedSegs[-1].getDistanceFromScafEnd() < (contig.getLength()-orderedSegs[-1].getConEnd()):
+            lastPart=[(contig,orderedSegs[-1].getConEnd()+orderedSegs[-1].getDistanceFromScafEnd(),contig.getLength(),contig.getStrand()),]
+        else:
+            lastPart=[]
+        output=firstPart+middlePart+lastPart
+        output=self.checkNegatives(output)
+        output=SuperSegment(output)
+        output.contigs.append(contig)
+        output.usedScaffolds+=[contig.getConnectors()[0],]
+        return output,[]
+        
+        
+    def joinScaffolds(self,contig):
         segments=[]
         smallIgnores=[]
         hiddenIgnores=[]
