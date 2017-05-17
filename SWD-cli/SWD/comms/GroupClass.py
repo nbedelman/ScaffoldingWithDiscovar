@@ -58,7 +58,7 @@ class Group(object):
             try:
                 fullContigJoin = self.joinFullContig(contig)
                 contigJoin = fullContigJoin[0]
-                contigIgnores = fullContigJoin [1]
+                contigIgnores = fullContigJoin[1]
                 hiddenIgnores+=contigIgnores
                 if contigJoin != []:
                     if contigJoin.getContigs() == []:
@@ -138,6 +138,12 @@ class Group(object):
             return self.joinScaffolds(contig)
             
     def extendScaffold(self,contig):
+        if contig.getStrand()=='-':
+            return self.extendScaffoldNegative(contig)
+        else:
+            return self.extendScaffoldPositive(contig)
+            
+    def extendScaffoldPositive(self,contig):
         orderedSegs=contig.orderSegs(contig.getGoodSegments())
         middlePart=[(contig.getConnectors()[0], 1, contig.getConnectors()[0].getLength(), contig.getConnectors()[0].getStrand()),]
         if orderedSegs[0].getDistanceFromScafStart() < orderedSegs[0].getConStart():
@@ -154,7 +160,24 @@ class Group(object):
         output.contigs.append(contig)
         output.usedScaffolds+=[contig.getConnectors()[0],]
         return output,[]
-        
+  
+    def extendScaffoldNegative(self,contig):
+        orderedSegs=contig.orderSegs(contig.getGoodSegments())
+        middlePart=[(contig.getConnectors()[0], 1, contig.getConnectors()[0].getLength(), contig.getConnectors()[0].getStrand()),]
+        if orderedSegs[0].getDistanceFromScafStart() < contig.getLength()-orderedSegs[0].getConEnd():
+            firstPart=[(contig,1,contig.getLength()-orderedSegs[0].getConEnd(),contig.getStrand()),]
+        else:
+            firstPart=[]
+        if orderedSegs[-1].getDistanceFromScafEnd() < orderedSegs[-1].getConStart():
+            lastPart=[(contig,contig.getLength()-orderedSegs[-1].getConStart(),contig.getLength(),contig.getStrand()),]
+        else:
+            lastPart=[]
+        output=firstPart+middlePart+lastPart
+        output=self.checkNegatives(output)
+        output=SuperSegment(output)
+        output.contigs.append(contig)
+        output.usedScaffolds+=[contig.getConnectors()[0],]
+        return output,[]     
         
     def joinScaffolds(self,contig):
         segments=[]
@@ -198,12 +221,17 @@ class Group(object):
             for index in range(len(superScaffolds)):
                 toJoin=superScaffolds[index]
                 if toJoin.isOverlapping(joinedSupers):
-                    together=self.overlapJoin(toJoin, joinedSupers, intraContig)
                     try:
-                        unjoined=notJoined+superScaffolds[index+1:]
-                    except IndexError:
-                        unjoined=notJoined
-                    return self.joinSuperScaffolds(unjoined, together, intraContig)   
+                        together=self.overlapJoin(toJoin, joinedSupers, intraContig)
+                        try:
+                            unjoined=notJoined+superScaffolds[index+1:]
+                        except IndexError:
+                            unjoined=notJoined
+                        return self.joinSuperScaffolds(unjoined, together, intraContig) 
+                    except UnboundLocalError:
+                        #This happens in some complex enveloper cases. There are no shared scaffolds between the superScaffolds, but the contig maps to both of them. Here, I essentially save the join for the next iteration.
+                        if joinedSupers.getFirstOverlap(toJoin, partType=Contig):
+                            notJoined.append(superScaffolds[index]) 
                 else:
                     notJoined.append(superScaffolds[index]) 
                 

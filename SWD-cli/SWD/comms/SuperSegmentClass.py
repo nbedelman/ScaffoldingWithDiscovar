@@ -138,7 +138,7 @@ class SuperSegment(object):
             if (not partType) or (part.getType()==partType):
                 thisSuperParts.append(part.getName())
         for otherPart in otherSuperSegment.getPartsInOrder():
-            if (not partType) or (part.getType()==partType):
+            if (not partType) or (otherPart.getType()==partType):
                 otherSuperParts.append(otherPart.getName())
         for name in thisSuperParts:
             for otherName in otherSuperParts:
