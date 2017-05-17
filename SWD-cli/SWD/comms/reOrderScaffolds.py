@@ -65,7 +65,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
         print("combined groups")
         chromosome.writeOverviewResults()
         print("wrote results")
-        chromosome.writeFasta(originalGenome, discovarAssembly)
+        #chromosome.writeFasta(originalGenome, discovarAssembly)
         print ("done")
     print ("COMPLETED")
     return chromosomes
