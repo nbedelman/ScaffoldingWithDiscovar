@@ -29,7 +29,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
         *coordinates.txt: text files with coordinated of combined scaffolds in form <SCAFFOLD,START,STOP,STRAND>
         *envelopers.txt: text files with information about scaffolds that mapped inside others in form
             ENVELOPING SCAF: <list of enveloped scafs> <list of "evidence" in form (DISCOVAR CONTIG, [SCAFFOLDS COMBINED BY CONTIG])>
-        *fixed.fasta: fasta file with the result of using discovar to join reference scaffolds
+        *discoOrder.fasta: fasta file with the result of using discovar to join reference scaffolds
     '''
     print ("reading contigs")
     Contig.ungroupedChrom=ungroupedChrom
@@ -43,30 +43,52 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
     print ("done")
     print ("finding overlapping scaffolds and contigs")
     for contig in rawContigs:
-        contig.findConnectors(scaffolds)
+        contig.findConnectors(scaffolds, "good")
     print ("done")
     print ("combining contig sub-alignments")
     simpContigs=combineSegments(rawContigs)
     print ("done")
+    print ("finding connections after simplifying")
+    for contig in simpContigs:
+        contig.findConnectors(scaffolds, "combined")
     print ("grouping by Chromosome")
     chromDict=groupPiecesByChromosome(simpContigs,scaffolds)
     chromosomes=makeChromosomes(chromDict)
     print ("done")
     print ("grouping within Chromosome and making super scaffolds")
+    usedUngroupedScafs=[]
     for chromosome in chromosomes:
-        print ("writing output")
-        print (chromosome.getName())
-        chromosome.makeAllGroups()
-        print ("made all groups")
-        numGroups=len(chromosome.getGroups())
-        for group in range(numGroups):
-            chromosome.getGroups()[group].makeSuperScaffolds()
-        chromosome.combineGroups(combineMethod)
-        print("combined groups")
-        chromosome.writeOverviewResults()
-        print("wrote results")
-        #chromosome.writeFasta(originalGenome, discovarAssembly)
-        print ("done")
+        if chromosome.getName()!=Contig.ungroupedChrom:
+            print ("writing output")
+            print (chromosome.getName())
+            chromosome.makeAllGroups()
+            print ("made all groups")
+            numGroups=len(chromosome.getGroups())
+            for group in range(numGroups):
+                chromosome.getGroups()[group].makeSuperScaffolds()
+            chromosome.combineGroups(combineMethod)
+            usedUngroupedScafs+=chromosome.getUsedUngroupedScafs()
+            print("combined groups")
+            chromosome.writeOverviewResults()
+            print("wrote results")
+            chromosome.writeFasta(originalGenome, discovarAssembly)
+            print ("done")
+        else:
+            unGrouped=chromosome
+    unGrouped.removeScaffolds(usedUngroupedScafs)
+    print ("writing output")
+    print (unGrouped.getName())
+    unGrouped.makeAllGroups()
+    print ("made all groups")
+    numGroups=len(unGrouped.getGroups())
+    for group in range(numGroups):
+        unGrouped.getGroups()[group].makeSuperScaffolds()
+    unGrouped.combineGroups(combineMethod)
+    print("combined groups")
+    unGrouped.writeOverviewResults()
+    print("wrote results")
+    chromosome.writeFasta(originalGenome, discovarAssembly)
+    print ("done")
     print ("COMPLETED")
     return chromosomes
 
@@ -174,7 +196,3 @@ def write_csv(file, asequence, header=None):
     a.writerows(asequence)
     fp.close()
 
-
-
-#"../../../../Hmel3_Project/data/finalAssembly/manualFixOverlaps","../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldMapPlaced_newNames.bed", \
-#"../../../../Hmel3_Project/data/sheffieldReferenceOrder/sheffieldNames_originalOrientation.fa", "../../../../Hmel3_Project/data/finalAssembly/DAV_5_melpomene_a-#scaffolds.fasta", \combineMethod="first", reportDirectory=None)

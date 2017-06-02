@@ -61,17 +61,11 @@ class Contig(object):
     def getInOrEx(self):
         return self.inOrEx
     def cullSegments(self):
-        #!!!!!Made a quick fix because mapping was off for ungrouped chrom! remove # from line 74 when fixed.
-        chrom=''
-        if self.getChrom() != self.ungroupedChrom:
-            chrom=self.getChrom()
-        else:
-            for segment in self.getAllSegments():
-                if segment.getChrom() != self.ungroupedChrom:
-                    chrom = segment.getChrom()
-                    break
+        #Tried to make it so even if the first match was to the ungroupedChrom, we could use it. That proved to cause more problems than it solved, so took that functionality out.
+        #5/31/17
+        chrom=self.getChrom()            
         for segment in self.getAllSegments():
-            if segment.getChrom() == chrom:# or segment.getChrom() == self.ungroupedChrom:
+            if segment.getChrom() == chrom or segment.getChrom() == self.ungroupedChrom:
                 duplicateSeg=False
                 for goodSeg in self.getGoodSegments():
                     if goodSeg.getName() == segment.getName():
@@ -84,6 +78,8 @@ class Contig(object):
         return self.connectors
                 
     def combineSegments(self):
+        '''here, combine segments that are very close to each other and really represent a single long mapping. 
+        Also get rid of very small (and therefore possibly spurious) alignments. Here, "small" is <1000 bp AND < 75% of the scaffold to which it maps'''
         if self.getGoodSegments() == []:
             raise NoSegmentError("Remember to cull segments before combining!")
         #elif len(self.getGoodSegments()) ==1:
@@ -96,7 +92,9 @@ class Contig(object):
             #else:
             longEnough=[]
             for seg in combinedSegs:
-                if seg.getConEnd()-seg.getConStart() > 1000:
+                overlapLength=seg.getOverlap()[0].getLength()
+                mappingPercent=float(seg.getConEnd()-seg.getConStart())/overlapLength
+                if (seg.getConEnd()-seg.getConStart() > 1000) or (mappingPercent > .75) :
                     longEnough.append(seg)
             self.combinedSegments=longEnough
     def outputBed(self, segList, fileName):
@@ -110,9 +108,13 @@ class Contig(object):
                 outString+=segment.getColor()+"\n"
                 o.write(outString)
         o.close()
-    def findConnectors(self, scaffoldList):
+    def findConnectors(self, scaffoldList, segType):
         connects=[]
-        for segment in self.getGoodSegments():
+        if segType=='good':
+            segList=self.getGoodSegments()
+        elif segType=='combined':
+            segList=self.getCombinedSegments()
+        for segment in segList:
             overlapper=segment.findOverlaps(scaffoldList)
             for scaffold in overlapper:
                 if (not scaffold in connects) and (not scaffold.getName() == "Ns"):
