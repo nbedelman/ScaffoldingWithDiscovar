@@ -15,14 +15,16 @@ subparsers=parser.add_subparsers(help='sub-command help')
 
 #genomeBuild subParser
 parser_genomeBuild=subparsers.add_parser('genomeBuild',help='genomeBuild help')
-parser_genomeBuild.add_argument('map', type=str,
-                    help='path to map bed file')
 parser_genomeBuild.add_argument('refGenome', type=str,
                     help='path to reference genome file')
+parser_genomeBuild.add_argument('dbName', type=str,
+                    help='name of database to create')
 parser_genomeBuild.add_argument('config',nargs='?', type=str,
                     help='path to config file',default="lastdbConfig.py")
 parser_genomeBuild.add_argument('--asChroms',action='store_true',
                     help='specifies that refGenome is a fasta file with one entry per chromosome. Default is that refGenome is a fasta file with one entry per scaffold.')
+parser_genomeBuild.add_argument('--map', type=str,
+                    help='path to map bed file')
 parser_genomeBuild.set_defaults(which='genomeBuild')
 
 #lastAlign subParser
@@ -47,6 +49,8 @@ parser_reOrder.add_argument('--refGenome',type=str,
                     help='Fasta file of reference genome')
 parser_reOrder.add_argument('--newAssembly',type=str,
                     help='Fasta file of new assembly')
+parser_reOrder.add_argument('--ungroupedChrom',default='',type=str,
+                    help='name of "chromosome" of ungrouped scaffolds, if it exists')
 parser_reOrder.set_defaults(which='reOrder')
 
 
@@ -73,20 +77,19 @@ parser_overviewToIntersects.set_defaults(which='overviewToIntersects')
 arguments=parser.parse_args()
 
 ########### The genomeBuild Command ###########
-def genomeBuild(map, refGenome, config, asChroms):
+def genomeBuild(refGenome,  dbName,config,asChroms,map=None):
     if not asChroms:
         chromGenome=os.path.basename(refGenome).split(".")[0]+"_chroms.fa"
         convertToChroms(map,refGenome, chromGenome)
         refGenome=chromGenome
     config=os.path.basename(config).split(".")[0]
-    print ("running lastdb with the following parameters:")
-    print ("config file:", config)
+    #print ("running lastdb with the following parameters:")
+    #print ("config file:", config)
     options=lastdbOptions.getOptions(config)
-    dbName=os.path.basename(refGenome).split(".")[0]+"db"
-    print ("database name:", dbName)
-    cmd='''lastdb %s %s %s''' % (options,dbName,refGenome)
-    print (cmd)
-    os.system("sbatch generalSlurm.slurm cmd")
+    #print ("database name:", dbName)
+    cmd='''sbatch genomeBuild.slurm "%s" %s %s''' % (options,dbName,refGenome)
+    #print (cmd)
+    os.system(cmd)
 def convertToChroms(map,refGenome,chromGenome):
         print ("combining scaffolds into chromosomes")
         convertBed=os.path.basename(refGenome).split(".")[0]+"_tmpmap.bed"
@@ -115,7 +118,10 @@ def convertToChroms(map,refGenome,chromGenome):
         os.system('rm -f *tmp*')
 
 if arguments.which=='genomeBuild':
-    genomeBuild(arguments.map, arguments.refGenome, arguments.config, arguments.asChroms)
+    if not arguments.asChroms:
+        genomeBuild(arguments.refGenome,  arguments.dbName,arguments.config,arguments.asChroms,arguments.map)
+    else:
+        genomeBuild(arguments.refGenome, arguments.dbName, arguments.config,arguments.asChroms)
 
 ###########the lastAlign Command#######
 
@@ -149,8 +155,8 @@ if arguments.which=='overviewToIntersects':
 
 #############The reOrderScaffolds Command#############
 
-def reOrder(bedDirectory,map,refGenome,newAssembly):
-	reOrderScaffolds.runAll(bedDirectory,map,refGenome,newAssembly)
+def reOrder(bedDirectory,map,refGenome,newAssembly,ungroupedChrom):
+	reOrderScaffolds.runAll(bedDirectory,map,refGenome,newAssembly,ungroupedChrom)
 
 if arguments.which=='reOrder':
-	reOrder(arguments.bedDirectory,arguments.map,arguments.refGenome,arguments.newAssembly)
+	reOrder(arguments.bedDirectory,arguments.map,arguments.refGenome,arguments.newAssembly,arguments.ungroupedChrom)
