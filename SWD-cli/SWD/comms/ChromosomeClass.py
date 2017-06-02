@@ -32,6 +32,7 @@ class Chromosome(object):
         self.groups=[]
         self.unGroupedScaffolds=[]
         self.superScaffolds=[]
+        self.usedUngroupedScafs=[]
     def getName(self):
         return self.name
     def getScaffoldList(self):
@@ -43,7 +44,9 @@ class Chromosome(object):
     def getUngroupedScaffolds(self):
         return self.unGroupedScaffolds 
     def getSuperScaffolds(self):
-        return self.superScaffolds       
+        return self.superScaffolds 
+    def getUsedUngroupedScafs(self):
+        return self.usedUngroupedScafs      
     def makeAllGroups(self):
         allContigs=copy.copy(self.contigList)
         usedContigs=[]
@@ -58,7 +61,14 @@ class Chromosome(object):
         for scaffold in self.getScaffoldList():
             if not self.checkIfUsed(usedScaffolds, scaffold):
                 self.unGroupedScaffolds.append(scaffold)
-    
+                
+    def removeScaffolds(self, listOfScafNames):
+        currentScafs=self.getScaffoldList()
+        self.scaffoldList=[]
+        for s in currentScafs:
+            if s.getName() not in listOfScafNames:
+                self.scaffoldList.append(s)
+                
     def checkIfUsed(self,aList, anObject):
         used=False
         for item in aList:
@@ -68,11 +78,16 @@ class Chromosome(object):
         return used    
     
     def makeGroup(self,contig):
-        contig_list=[contig,]
-        scaffold_list = copy.copy(contig.getConnectors())
-        listNow=[scaf.getName() for scaf in scaffold_list]
-        finishedLists=(self.backAndForth(contig_list,scaffold_list))
-        return Group(finishedLists[0], finishedLists[1], self)
+        if self.getName() != Contig.ungroupedChrom:
+            contig_list=[contig,]
+            scaffold_list = copy.copy(contig.getConnectors())
+            finishedLists=(self.backAndForth(contig_list,scaffold_list))
+            return Group(finishedLists[0], finishedLists[1], self)
+        else:
+            if len(contig.getConnectors())==1:
+                return Group([contig,],contig.getConnectors(),self)
+            else:
+                return Group([contig,],[],self)
         
     def backAndForth(self,contigList,scaffoldList):
         startContigs=len(contigList)
@@ -121,14 +136,19 @@ class Chromosome(object):
                 self.unGroupedScaffolds.append(unUsed)
                 
         for scaffold in self.getUngroupedScaffolds():
-            superScaf=SuperSegment([(scaffold,1,scaffold.getLength(),scaffold.getStrand()),])
-            allSuperScafs.append(superScaf)
+            if scaffold.getChrom() == self.getName():
+                superScaf=SuperSegment([(scaffold,1,scaffold.getLength(),scaffold.getStrand()),])
+                allSuperScafs.append(superScaf)
         sortable=[]
         for superScaf in allSuperScafs:
             sortable.append((superScaf, superScaf.getFirstCoordinate(base)))
         sortable=sorted(sortable, key=itemgetter(1))
         onlyScafs=[sup[0] for sup in sortable]
         self.superScaffolds=onlyScafs
+        
+        for scaffold in totalUsed:
+            if Contig.ungroupedChrom in scaffold:
+                self.usedUngroupedScafs.append(scaffold)
         
        
     def writeOverviewResults(self):
