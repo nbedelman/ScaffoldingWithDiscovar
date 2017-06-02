@@ -1,10 +1,14 @@
+#!/usr/bin/env Rscript
+
 library(reshape2)
 library(ggplot2)
 
+args <- commandArgs(trailingOnly=TRUE)
+genome <- args[1]
+
 alignmentStats  <- function(f){
 
-base=as.list(strsplit(f,"_"))
-base=paste0(base[[1]][1],"_",base[[1]][2])
+base=tail(strsplit(f,"/")[[1]],n=1)
 
 #read the file
 aligns=read.delim(f,sep="\t", header=F,col.names=c("Chr","ConStart","ConEnd","ID","Score","Strand","AlignStart","AlignEnd","RGB"))
@@ -28,7 +32,7 @@ summary=cbind(summary,numContigs)
 colors=c("darkblue","blue", "cyan", "red","pink","orange", "yellow","green","forestgreen")
 
 pdf(paste0(base,"_OverviewBarPlot.pdf"))
-barplot(summary$numContigs,names.arg=summary$labels, col=colors, 
+barplot(summary$numContigs,names.arg=summary$labels, col=colors,
         main=paste(base,"Distribution of Mapping Quality"), xlab="Frequency", ylab="Quality")
 dev.off()
 
@@ -104,7 +108,7 @@ cumulScores$x<-factor(cumulScores$x,levels=c("Unique Map","All Inside",">75% Ins
 colors2a=append(rev(colors),"darkblue")
 ggplot(data=cumulScores, aes(x=x, y=y, group=1)) +
   geom_line(aes(color=x), size=3)+ scale_color_manual(values=colors2a) +
-  xlab("Map Quality") + ylab("Cumulative Length") + 
+  xlab("Map Quality") + ylab("Cumulative Length") +
   #geom_hline(aes(yintercept=2.76e+08),linetype="dashed") +
   labs(list(title=paste0(base," cumulative length by quality"),x = "quality", y="length"))#+
   #theme(legend.position="none")
@@ -117,4 +121,4 @@ ggsave(paste0(base,"_LineGraph.pdf"),width = 11,height = 8.5)
 #  eval(parse(text=args[[i]]))
 #}
 
-#alignmentStats("h_cydno_allOverviews.bed")
+alignmentStats(genome)

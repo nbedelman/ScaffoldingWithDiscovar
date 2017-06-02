@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #formatFasta.py
 
 #this seems silly, but easiest way I know to make sure the fasta is properly formatted

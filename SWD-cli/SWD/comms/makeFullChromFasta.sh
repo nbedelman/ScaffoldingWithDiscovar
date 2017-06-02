@@ -1,12 +1,13 @@
 #!/bin/bash
 
 round=$1
-outputFile=$2
+inputDir=$2
+outputBase=$3
 
-for f in *discoOrder.fasta
-do header=$(basename $f .fasta)\_$round
-echo ">"$header >> $outputFile
-grep -v ">" $f | tr -d '\n'|awk 1 >> $outputFile
+for f in $inputDir/*discoOrder.fasta;
+do header=$(basename $f .fasta)\_$round;
+echo ">"$header >> $outputBase\_chroms.fa;
+grep -v ">" $f | tr -d '\n'|awk 1 >> $outputBase\_chroms.fa;
 done
-python ~/Documents/Mallet_Lab/referenceScaffolding/ScaffoldingWithDiscovar/SWD-cli/SWD/comms/formatFasta.py $outputFile
-#mv $outputFile\_tmp $outputFile
+formatFasta.py $outputBase\_chroms.fa
+mv $outputBase\_chroms.fa\_tmp $outputBase\_chroms.fa
