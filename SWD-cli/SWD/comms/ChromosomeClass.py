@@ -83,6 +83,7 @@ class Chromosome(object):
             scaffold_list = copy.copy(contig.getConnectors())
             finishedLists=(self.backAndForth(contig_list,scaffold_list))
             return Group(finishedLists[0], finishedLists[1], self)
+        #we don't want to connect placed scaffolds to unplaced ones in the unplaced scaffold chrom. The only thing we want to do is extend if possible.
         else:
             if len(contig.getConnectors())==1:
                 return Group([contig,],contig.getConnectors(),self)
@@ -100,8 +101,10 @@ class Chromosome(object):
                     newContigs.append(overlappingContig)
         for contig in contigList:
             for overlappingScaffold in contig.getConnectors():
-                if not self.checkIfUsed(newScaffolds, overlappingScaffold):   
-                    newScaffolds.append(overlappingScaffold)       
+                #Need to make sure we're not connecting across different chromosomes. Don't add scaffolds outside the current chrom/ungroupedChroms
+                if (overlappingScaffold.getChrom() == self.getName()) or (overlappingScaffold.getChrom() == Contig.ungroupedChrom):
+                    if not self.checkIfUsed(newScaffolds, overlappingScaffold):   
+                        newScaffolds.append(overlappingScaffold)       
         if startContigs == len(newContigs) and startScaffolds==len(newScaffolds):
             return (newContigs,newScaffolds)
         else:

@@ -60,7 +60,7 @@ class Group(object):
                 contigJoin = fullContigJoin[0]
                 contigIgnores = fullContigJoin[1]
                 hiddenIgnores+=contigIgnores
-                if contigJoin != []:
+                if contigJoin != [] and self.allInChrom(contigJoin): #6/5/17
                     if contigJoin.getContigs() == []:
                         contigJoin.contigs.append(contig)
                     self.superScaffolds.append(contigJoin)
@@ -83,6 +83,16 @@ class Group(object):
             self.fullGroupJoin.alignWithBestScaf()
             self.fullGroupJoin.segIgnores+=hiddenIgnores
             self.fullGroupJoin.unusedScaffolds+=unusedScafs
+    
+    def allInChrom(self,superSeg): #6/5/17
+        '''this function ensures that we don't accidentally bridge across chromosomes (this can happen through the ungroupedChrom)'''
+        allIn=True
+        for p in superSeg.getPartsInOrder():
+            if p.getType()==Scaffold:
+                if (p.getBackbone().getChrom() != self.chromosome.getName()) and (p.getBackbone().getChrom() != Contig.ungroupedChrom):
+                    allIn=False
+                    break
+        return allIn
     
     def reportContig(self,contig,contigJoin):
         #make a report of what happened with each contig. List the contig, the scaffolds involved, and the final result. 
