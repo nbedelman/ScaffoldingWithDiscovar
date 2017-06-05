@@ -357,7 +357,9 @@ class Group(object):
         endOverlapPart=endSuper.getPartsInOrder()[endOverlappingIndex]
         overlapBackbone=startOverlapPart.getBackbone()
         
-        newOverlapPart=[(overlapBackbone,max(startOverlapPart.getStart(), endOverlapPart.getStart()), min(startOverlapPart.getEnd(), endOverlapPart.getEnd()),'+'),]
+        #edited 6/5/17. I think the new way should be correct.
+        #newOverlapPart=[(overlapBackbone,max(startOverlapPart.getStart(), endOverlapPart.getStart()), min(startOverlapPart.getEnd(), endOverlapPart.getEnd()),'+'),]
+        newOverlapPart=[(overlapBackbone,startOverlapPart.getStart(),endOverlapPart.getEnd(),'+'),]
         joinedSupers=newStart+newOverlapPart+newEnd
         joinedSupers=self.checkNegatives(joinedSupers)
         return joinedSupers

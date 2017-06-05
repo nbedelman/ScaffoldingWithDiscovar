@@ -144,6 +144,8 @@ class SuperSegment(object):
             for otherName in otherSuperParts:
                 if name== otherName:
                     return name
+        #If there is no overlapping part, return false.
+        return False
     
     def getOverlappingIndices(self, overlapName):
         result=[]
