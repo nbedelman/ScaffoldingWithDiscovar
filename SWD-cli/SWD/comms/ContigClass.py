@@ -28,12 +28,12 @@ class Contig(object):
             segment=Segment(otherLine)
             segment.contig=self
             self.allSegments.append(segment)
-        self.goodSegments=[]  
-        self.combinedSegments=[]    
-        self.connectors=[]  
+        self.goodSegments=[]
+        self.combinedSegments=[]
+        self.connectors=[]
         self.inOrEx="e"
     def getScore(self):
-        return self.score      
+        return self.score
     def getChrom(self):
         return self.chrom
     def getStart(self):
@@ -43,17 +43,17 @@ class Contig(object):
     def getName(self):
         return self.name
     def getLength(self):
-        return self.getRelEnd()-self.getRelStart()
+        return self.getRelEnd()-self.getRelStart()+1
     def getStrand(self):
-        return self.strand 
+        return self.strand
     def getRelStart(self):
         return self.relStart
     def getRelEnd(self):
         return self.relEnd
     def getColor(self):
-        return self.color 
+        return self.color
     def getAllSegments(self):
-        return self.allSegments 
+        return self.allSegments
     def getGoodSegments(self):
         return self.goodSegments
     def getCombinedSegments(self):
@@ -63,7 +63,7 @@ class Contig(object):
     def cullSegments(self):
         #Tried to make it so even if the first match was to the ungroupedChrom, we could use it. That proved to cause more problems than it solved, so took that functionality out.
         #5/31/17
-        chrom=self.getChrom()            
+        chrom=self.getChrom()
         for segment in self.getAllSegments():
             if segment.getChrom() == chrom or segment.getChrom() == self.ungroupedChrom:
                 duplicateSeg=False
@@ -71,14 +71,14 @@ class Contig(object):
                     if goodSeg.getName() == segment.getName():
                         duplicateSeg=True
                         break
-                if (duplicateSeg == False):        
+                if (duplicateSeg == False):
                     self.goodSegments.append(segment)
-                
+
     def getConnectors(self):
         return self.connectors
-                
+
     def combineSegments(self):
-        '''here, combine segments that are very close to each other and really represent a single long mapping. 
+        '''here, combine segments that are very close to each other and really represent a single long mapping.
         Also get rid of very small (and therefore possibly spurious) alignments. Here, "small" is <1000 bp AND < 75% of the scaffold to which it maps'''
         if self.getGoodSegments() == []:
             raise NoSegmentError("Remember to cull segments before combining!")
@@ -120,7 +120,7 @@ class Contig(object):
                 if (not scaffold in connects) and (not scaffold.getName() == "Ns"):
                     connects.append(scaffold)
         self.connectors=connects
-                
+
     def orderSegs(self,segmentList):
         unordered=[]
         ordered=[]
@@ -128,10 +128,10 @@ class Contig(object):
             unordered.append((i,i.getStart()))
         ordered=sorted(unordered, key=itemgetter(1))
         segsOnly=[entry[0] for entry in ordered]
-        return segsOnly            
-                
-            
-        
+        return segsOnly
+
+
+
     def combineLists(self, goodSegs):
         combined=[]
         goodIndices=[]
@@ -146,11 +146,11 @@ class Contig(object):
             if not l in goodIndices:
                 combined.append(goodSegs[l])
         if len(goodSegs) == len(combined):
-            return goodSegs 
+            return goodSegs
         else:
             return self.combineLists(combined)
 
-                            
+
     def tryCombining(self, segOne, segTwo):
         if segOne.getStrand()!=segTwo.getStrand():
             return False
@@ -164,13 +164,13 @@ class Contig(object):
         elif (abs(segTwo.getEnd()-segOne.getStart()) < 500 and self.closeOnContig(segOne, segTwo)) or ((segTwo.getEnd() > segOne.getStart())and (segTwo.getStart() < segOne.getStart())):
             newSegment=copy.copy(segTwo)
             newSegment.relEnd=segOne.getRelEnd()
-            newSegment.end=segOne.getEnd()       
-            return newSegment   
+            newSegment.end=segOne.getEnd()
+            return newSegment
         elif segOne.getStart() == segTwo.getStart() and segOne.getEnd() ==segTwo.getEnd():
-            return segOne 
+            return segOne
         else:
             return False
-            
+
     def closeOnContig(self, segOne, segTwo):
         if segOne.getStrand() == '+':
             if abs(segOne.getConEnd() - segTwo.getConStart()) <500:

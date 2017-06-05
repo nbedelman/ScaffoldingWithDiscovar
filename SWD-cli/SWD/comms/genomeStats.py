@@ -23,7 +23,7 @@ def getGenomeStats(genomeFile, format):
         genome=open(genomeFile,"r")
         for entry in genome:
             atts=entry.split("\t")
-            length=int(atts[2])-int(atts[1])
+            length=int(atts[2])-int(atts[1])+1
             lengths.append(length)
             if length >= 1000:
                 ge1KB.append(length)

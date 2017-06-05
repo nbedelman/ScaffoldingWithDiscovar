@@ -45,7 +45,7 @@ class Part(object):
     def getEnd(self):
         return self.end
     def getLength(self):
-        return self.getEnd()- self.getStart()
+        return self.getEnd()- self.getStart() +1
     def printPart(self):
         output="%s,%i,%i,%s\n" % (self.getName(), self.getStart(), self.getEnd(), self.getStrand())
         return output
@@ -56,7 +56,7 @@ class Part(object):
             self.strand = '-'
         else:
             self.strand = '+'
-        newEnd = self.getBackboneLength() - self.getStart()
-        newStart = self.getBackboneLength() - self.getEnd()
+        newEnd = self.getBackboneLength() - self.getStart() +1
+        newStart = self.getBackboneLength() - self.getEnd() +1
         self.end = newEnd
         self.start = newStart

@@ -36,7 +36,7 @@ class Segment(object):
     def getOriginalStrand(self):
         return self.originalStrand
     def getConLength(self):
-        return self.getRelEnd()-self.getRelStart()
+        return self.getRelEnd()-self.getRelStart()+1
     def getContig(self):
         return self.contig
     def getConStart(self):
@@ -58,7 +58,7 @@ class Segment(object):
     def getName(self):
         return self.name
     def getLength(self):
-        return self.getEnd()-self.getStart()
+        return self.getEnd()-self.getStart() +1
     def getStrand(self):
         if self.isFlipped:
             if self.strand == '+':
