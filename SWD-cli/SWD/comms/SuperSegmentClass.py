@@ -28,6 +28,7 @@ class SuperSegment(object):
         self.unusedScaffolds=[]
         self.inclusiveJoin=[]
         self.exclusiveJoin=[]
+        self.joinType=''
     def getContigs(self):
         '''return the list of unique contigs used by this superSegment'''
         unique=[]
@@ -110,17 +111,35 @@ class SuperSegment(object):
             lengths.append(part.getLength())
         return sum(lengths)
     
-    def getFirstCoordinate(self, base):
+    def getJoinType(self):
+        return self.joinType
+    
+    def getSortCoordinates(self, base):
+        #get the first and last coordinates of the superScaffold so we can order them when creating the chromosome
         sortParts=[]
         for part in range(len(self.getPartsInOrder())):
             if self.getPartsInOrder()[part].getType() == Scaffold:
-                sortParts.append((self.getPartsInOrder()[part], self.getPartsInOrder()[part].getScore(), self.getPartsInOrder()[part].getBackboneLength()))
-        if base =="first":
+                sortParts.append((self.getPartsInOrder()[part], self.getPartsInOrder()[part].getScore(), self.getPartsInOrder()[part].getBackboneLength(), self.getPartsInOrder()[part].getBackbone().getStart()))
+        if base =="size":
             sortParts = sorted(sortParts, key=itemgetter(2), reverse=True)
         elif base=="best":
             sortParts = sorted(sortParts, key=itemgetter(1,2), reverse=True)
-        out = sortParts[0][0]
-        return out.getBackbone().getStart()
+        elif base=="first":
+            sortParts = sorted(sortParts, key=itemgetter(3))
+        
+        first = sortParts[0][0]
+        last = sortParts[-1][0] 
+        start= first.getBackbone().getStart()
+        end=last.getBackbone().getEnd()
+        
+        #If this superScaffold is an extension, add the contig pieces to either side so we can get rid of the abutting stretches of N's
+        if self.getJoinType()=="ext":
+            if self.getPartsInOrder()[0].getType()==Contig:
+                start-=self.getPartsInOrder()[0].getLength()
+            if self.getPartsInOrder()[-1].getType()==Contig:
+                end+=self.getPartsInOrder()[-1].getLength()
+        return (start,end )
+        
     def isOverlapping(self, otherSuperSegment):
         overlaps=False
         for part in self.getPartsInOrder():
@@ -144,6 +163,8 @@ class SuperSegment(object):
             for otherName in otherSuperParts:
                 if name== otherName:
                     return name
+        #If there is no overlapping part, return false.
+        return False
     
     def getOverlappingIndices(self, overlapName):
         result=[]

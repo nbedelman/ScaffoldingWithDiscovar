@@ -22,6 +22,12 @@ class Group(object):
         self.chromosome=chromosome
         self.inversions=[]
         self.contigReports=[]
+        self.brandNew=True
+        self.transferredSuperScaffolds=[]
+    def isBrandNew(self):
+        return self.brandNew
+    def getTransferredSuperScaffolds(self):
+        return self.transferredSuperScaffolds
     def getContigList(self):
         return self.contigList
     def getScaffoldList(self):
@@ -52,23 +58,31 @@ class Group(object):
     def getContigReports(self):
         return self.contigReports        
     def makeSuperScaffolds(self):
-        superScaffolds=[]
-        hiddenIgnores=[]
-        for contig in self.getContigList():
-            try:
-                fullContigJoin = self.joinFullContig(contig)
-                contigJoin = fullContigJoin[0]
-                contigIgnores = fullContigJoin[1]
-                hiddenIgnores+=contigIgnores
-                if contigJoin != [] and self.allInChrom(contigJoin): #6/5/17
-                    if contigJoin.getContigs() == []:
-                        contigJoin.contigs.append(contig)
-                    self.superScaffolds.append(contigJoin)
-                    superScaffolds.append(contigJoin)
-                    contigReport=self.reportContig(contig,contigJoin)
-                    self.contigReports.append(contigReport)
-            except InversionError:
-                self.inversions.append(contig)
+        if self.isBrandNew():
+            superScaffolds=[]
+            hiddenIgnores=[]
+            for contig in self.getContigList():
+                try:
+                    fullContigJoin = self.joinFullContig(contig)
+                    contigJoin = fullContigJoin[0]
+                    contigIgnores = fullContigJoin[1]
+                    hiddenIgnores+=contigIgnores
+                    if contigJoin != [] and self.allInChrom(contigJoin): #6/5/17
+                        if contigJoin.getContigs() == []:
+                            contigJoin.contigs.append(contig)
+                        contigReport=self.reportContig(contig,contigJoin)
+                        #If the contig caused a scaffold to be enveloped, or nothing happened, we report it but do not use it to create the final output.
+                        if ("env" not in contigReport[6]) and (contigReport[6] != "none"):
+                            self.superScaffolds.append(contigJoin)
+                            superScaffolds.append(contigJoin)
+                        else:
+                            contigReport[7]="x"
+                        self.contigReports.append(contigReport)
+                except InversionError:
+                    self.inversions.append(contig)
+        else:
+            superScaffolds=self.getTransferredSuperScaffolds()
+            hiddenIgnores=[]
         toOrder=[(sup, sup.getTotalLength()) for sup in superScaffolds]
         ordered=sorted(toOrder, key=itemgetter(1), reverse=True)
         orderedSupers=[sup[0] for sup in ordered]
@@ -95,34 +109,43 @@ class Group(object):
         return allIn
     
     def reportContig(self,contig,contigJoin):
-        #make a report of what happened with each contig. List the contig, the scaffolds involved, and the final result. 
-        #Indicate whether there was a join, an enveloping, an inversion, or nothing
+        #make a report of what happened with each contig. List the contig, the scaffolds involved, a group indicator, and the final result. 
+        #Indicate whether there was a join, an enveloping, an inversion, an extension, or nothing
+        groupName="group_"+self.getScaffoldList()[0].getName()
         name=contig.getName()
-        connectingScaffolds=[con.getName() for con in contig.getConnectors()]
-        numConnects=len(connectingScaffolds)
         usedScaffolds=contigJoin.getUsedScaffolds()
         numUsed=len(usedScaffolds)
-        finalSup=contigJoin.printSuperSeg()
         scafsInFinal=[]
+        consInFinal=[]
         for part in contigJoin.getPartsInOrder():
             if part.getType()==Scaffold:
-                scafsInFinal.append(part.getBackbone().getName())
-        numScafsInFinal=len(scafsInFinal)
-        if numUsed==numScafsInFinal:
-            result="j"
-        elif numScafsInFinal==1:
-            result="e"
+                if part.getBackbone().getName() not in scafsInFinal:
+                    scafsInFinal.append(part.getBackbone().getName())
+            elif part.getType()==Contig:
+                if part.getBackbone().getName() not in consInFinal:
+                    consInFinal.append(part.getBackbone().getName())
+        if len(scafsInFinal)==1:
+            if len(consInFinal)==1:
+                result="ext"
+            elif len(consInFinal)==0:
+                if len(usedScaffolds)>1:
+                    result="env"
+                else:
+                    result="none"
+        elif numUsed==len(scafsInFinal):
+            result="join"
         else:
-            result="ej"
+            result="env/join"
         enveloped=""
         envelopeLength=""
-        if "e" in result:
+        if "env" in result:
             for i in usedScaffolds:
                 if i.getName() not in scafsInFinal:
                     enveloped+=(str(i.getName())+",")
                     envelopeLength+=(str(i.getLength())+",")
         lengths=[scaf.getLength() for scaf in contigJoin.getUsedScaffolds()]
-        return [name,[scaf.getName() for scaf in usedScaffolds],lengths,enveloped,envelopeLength,result,"use"]
+        contigJoin.joinType=result
+        return [groupName, name,[scaf.getName() for scaf in usedScaffolds],lengths,enveloped,envelopeLength,result,"use"]
                 
                 
         
@@ -154,7 +177,7 @@ class Group(object):
             return self.extendScaffoldPositive(contig)
             
     def extendScaffoldPositive(self,contig):
-        orderedSegs=contig.orderSegs(contig.getGoodSegments())
+        orderedSegs=contig.orderSegs(contig.getCombinedSegments())
         middlePart=[(contig.getConnectors()[0], 1, contig.getConnectors()[0].getLength(), contig.getConnectors()[0].getStrand()),]
         if orderedSegs[0].getDistanceFromScafStart() < orderedSegs[0].getConStart():
             firstPart=[(contig,1,orderedSegs[0].getConStart()-orderedSegs[0].getDistanceFromScafStart(),contig.getStrand()),]
@@ -172,7 +195,7 @@ class Group(object):
         return output,[]
   
     def extendScaffoldNegative(self,contig):
-        orderedSegs=contig.orderSegs(contig.getGoodSegments())
+        orderedSegs=contig.orderSegs(contig.getCombinedSegments())
         middlePart=[(contig.getConnectors()[0], 1, contig.getConnectors()[0].getLength(), contig.getConnectors()[0].getStrand()),]
         if orderedSegs[0].getDistanceFromScafStart() < contig.getLength()-orderedSegs[0].getConEnd():
             firstPart=[(contig,1,contig.getLength()-orderedSegs[0].getConEnd(),contig.getStrand()),]
@@ -256,15 +279,17 @@ class Group(object):
                         allContigs+=unJoined.getContigs()
                         allScaffolds+=unJoined.getUsedScaffolds()
                     newGroup = Group(allContigs, allScaffolds, self.chromosome)
+                    newGroup.brandNew=False
+                    newGroup.transferredSuperScaffolds=unJoinable
                     self.chromosome.groups.append(newGroup)
-                    for contig in allContigs:
-                        for groupCon in self.getContigList():
-                            if contig.getName() == groupCon.getName():
-                                self.contigList.remove(groupCon)
-                    for scaffold in allScaffolds:
-                        for groupScaf in self.getScaffoldList():
-                            if scaffold.getName() == groupScaf.getName():
-                                self.scaffoldList.remove(groupScaf)
+                    #for contig in allContigs:
+                    #    for groupCon in self.getContigList():
+                    #        if contig.getName() == groupCon.getName():
+                    #            self.contigList.remove(groupCon)
+                    #for scaffold in allScaffolds:
+                    #    for groupScaf in self.getScaffoldList():
+                    #        if scaffold.getName() == groupScaf.getName():
+                    #            self.scaffoldList.remove(groupScaf)
             return joinedSupers  
                  
     
@@ -306,6 +331,8 @@ class Group(object):
                     envelopedScafFlag=True
                     enveloper=double                     
         if envelopedScafFlag:
+            #if Group.consectutiveOnly:
+            #    return
             #pass
             #print 'Has EnvelopedScafFlag'
             return self.envelopedScafJoin(joinedSupers, toJoin, enveloper, intraContig)
@@ -357,7 +384,9 @@ class Group(object):
         endOverlapPart=endSuper.getPartsInOrder()[endOverlappingIndex]
         overlapBackbone=startOverlapPart.getBackbone()
         
-        newOverlapPart=[(overlapBackbone,max(startOverlapPart.getStart(), endOverlapPart.getStart()), min(startOverlapPart.getEnd(), endOverlapPart.getEnd()),'+'),]
+        #edited 6/5/17. I think the new way should be correct.
+        #newOverlapPart=[(overlapBackbone,max(startOverlapPart.getStart(), endOverlapPart.getStart()), min(startOverlapPart.getEnd(), endOverlapPart.getEnd()),'+'),]
+        newOverlapPart=[(overlapBackbone,startOverlapPart.getStart(),endOverlapPart.getEnd(),'+'),]
         joinedSupers=newStart+newOverlapPart+newEnd
         joinedSupers=self.checkNegatives(joinedSupers)
         return joinedSupers
@@ -597,7 +626,7 @@ class Group(object):
             else:
                 stillUnjoined.append(supScaf)
         if startNum == len(stillUnjoined):
-            return alreadyJoined, stillUnjoined
+            return (alreadyJoined, stillUnjoined)
         else:
             return self.insideOrUnjoinable(alreadyJoined,stillUnjoined) 
             
@@ -729,13 +758,16 @@ class Group(object):
         distFromScafStart=[]
         distFromScafEnd=[]
         scaffolds=[copy.copy(seg1.getOverlap()[0]),copy.copy(seg2.getOverlap()[0])]
+        if Group.consecutiveOnly:
+            if abs(scaffolds[0].getNumber()-scaffolds[1].getNumber())>1:
+                return 
         contig=copy.copy(seg1.getContig())
         output=''
         if seg1.getStrand() == '+' and self.distanceBetweenSegsChecks(seg1,seg2):
             #Figure out which scaffold should go first and which should go last
             distFromScafStart.append(seg1.getDistanceFromScafStart())
             distFromScafStart.append(seg2.getDistanceFromScafStart() - (seg2.getConStart()-seg1.getConStart()))
-            distFromScafEnd.append(seg1.getDistanceFromScafEnd() - seg2.getConEnd()-seg1.getConEnd())
+            distFromScafEnd.append(seg1.getDistanceFromScafEnd() - (seg2.getConEnd()-seg1.getConEnd()))
             distFromScafEnd.append(seg2.getDistanceFromScafEnd())
             furthestFromStart=distFromScafStart.index(max(distFromScafStart))
             startScaf=scaffolds[furthestFromStart]
@@ -775,16 +807,18 @@ class Group(object):
             return  
         
         if startScaf.getName() == endScaf.getName():
-            if joinType == "exclusive":
-                output=[(startScaf, 1, startScaf.getLength(), startScaf.getStrand()),]
-                output=self.checkNegatives(output)
-                output=SuperSegment(output)
-                output.contigs.append(contig)
-                output.usedScaffolds+=[seg1.getOverlap()[0],seg2.getOverlap()[0]]
-            elif joinType == "inclusive":
-                output=self.inclusiveSegJoin(seg1,seg2, startScaf.getName())
-                output.contigs.append(contig)
-                output.usedScaffolds+=[seg1.getOverlap()[0],seg2.getOverlap()[0]]
+            #6/13/17 - after talking with James Lewis, decided we didn't want to have any envelopers. In these cases, we will just disregard the segments.
+            return
+            #if joinType == "exclusive":
+            #    output=[(startScaf, 1, startScaf.getLength(), startScaf.getStrand()),]
+            #    output=self.checkNegatives(output)
+            #    output=SuperSegment(output)
+            #    output.contigs.append(contig)
+            #    output.usedScaffolds+=[seg1.getOverlap()[0],seg2.getOverlap()[0]]
+            #elif joinType == "inclusive":
+            #    output=self.inclusiveSegJoin(seg1,seg2, startScaf.getName())
+            #    output.contigs.append(contig)
+            #    output.usedScaffolds+=[seg1.getOverlap()[0],seg2.getOverlap()[0]]
                 
         else:
             #endOfStartScafOverlap = min(startScaf.getLength()-distFromScafEnd[furthestFromStart], startScaf.getLength())

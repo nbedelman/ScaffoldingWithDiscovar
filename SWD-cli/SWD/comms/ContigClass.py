@@ -112,10 +112,12 @@ class Contig(object):
         connects=[]
         if segType=='good':
             segList=self.getGoodSegments()
+            markScaffolds=False
         elif segType=='combined':
             segList=self.getCombinedSegments()
+            markScaffolds=True
         for segment in segList:
-            overlapper=segment.findOverlaps(scaffoldList)
+            overlapper=segment.findOverlaps(scaffoldList, markScaffolds)
             for scaffold in overlapper:
                 if (not scaffold in connects) and (not scaffold.getName() == "Ns"):
                     connects.append(scaffold)
@@ -156,12 +158,12 @@ class Contig(object):
             return False
         elif segOne.getOverlap()[0].getName() != segTwo.getOverlap()[0].getName():
             return False
-        elif (abs(segOne.getEnd()-segTwo.getStart()) < 500 and self.closeOnContig(segOne, segTwo)) or ((segOne.getEnd() > segTwo.getStart())and (segOne.getStart() < segTwo.getStart())):
+        elif (abs(segOne.getEnd()-segTwo.getStart()) < 1000 and self.closeOnContig(segOne, segTwo)) or ((segOne.getEnd() > segTwo.getStart())and (segOne.getStart() < segTwo.getStart())):
             newSegment=copy.copy(segOne)
             newSegment.relEnd=segTwo.getRelEnd()
             newSegment.end=segTwo.getEnd()
             return newSegment
-        elif (abs(segTwo.getEnd()-segOne.getStart()) < 500 and self.closeOnContig(segOne, segTwo)) or ((segTwo.getEnd() > segOne.getStart())and (segTwo.getStart() < segOne.getStart())):
+        elif (abs(segTwo.getEnd()-segOne.getStart()) < 1000 and self.closeOnContig(segOne, segTwo)) or ((segTwo.getEnd() > segOne.getStart())and (segTwo.getStart() < segOne.getStart())):
             newSegment=copy.copy(segTwo)
             newSegment.relEnd=segOne.getRelEnd()
             newSegment.end=segOne.getEnd()
@@ -173,10 +175,10 @@ class Contig(object):
 
     def closeOnContig(self, segOne, segTwo):
         if segOne.getStrand() == '+':
-            if abs(segOne.getConEnd() - segTwo.getConStart()) <500:
+            if abs(segOne.getConEnd() - segTwo.getConStart()) <1000:
                 return True
         elif segOne.getStrand() == '-':
-            if abs(segTwo.getConEnd() - segOne.getConStart()) <500:
+            if abs(segTwo.getConEnd() - segOne.getConStart()) <1000:
                 return True
         else:
             return False

@@ -111,7 +111,7 @@ class Segment(object):
         for i in self.getOverlap():
             return i.getLength()-self.getScafEnd()
 
-    def findOverlaps(self, scaffoldList):
+    def findOverlaps(self, scaffoldList, markScaffolds):
         overlaps=[]
         for scaffold in scaffoldList:
             if scaffold.getChrom() == self.getChrom():
@@ -120,16 +120,16 @@ class Segment(object):
                     if (self.getEnd() >= scaffold.getStart() and self.getEnd() <= scaffold.getEnd()):
                         oLength=self.getLength()
                         overlaps.append((scaffold, oLength))
-                        if not self.checkIfUsed(scaffold.getOverlaps(), self.getContig()):
+                        if (not self.checkIfUsed(scaffold.getOverlaps(), self.getContig())) and markScaffolds:
                             scaffold.overlaps.append(self.getContig())
                     else:
                         oLength=scaffold.getEnd()-self.getStart()
-                        if not self.checkIfUsed(scaffold.getOverlaps(), self.getContig()):
+                        if (not self.checkIfUsed(scaffold.getOverlaps(), self.getContig())) and markScaffolds:
                             scaffold.overlaps.append(self.getContig())
                 elif (self.getEnd() >= scaffold.getStart() and self.getEnd() <= scaffold.getEnd()):
                     oLength=self.getEnd()-scaffold.getStart()
                     overlaps.append((scaffold, oLength))
-                    if not self.checkIfUsed(scaffold.getOverlaps(), self.getContig()):
+                    if (not self.checkIfUsed(scaffold.getOverlaps(), self.getContig())) and markScaffolds:
                         scaffold.overlaps.append(self.getContig())
         if len(overlaps) > 1:
             ordered=sorted(overlaps, key=itemgetter(1), reverse=True)

@@ -33,6 +33,7 @@ class Chromosome(object):
         self.unGroupedScaffolds=[]
         self.superScaffolds=[]
         self.usedUngroupedScafs=[]
+        self.overwrittenSupers=[]
     def getName(self):
         return self.name
     def getScaffoldList(self):
@@ -46,7 +47,9 @@ class Chromosome(object):
     def getSuperScaffolds(self):
         return self.superScaffolds 
     def getUsedUngroupedScafs(self):
-        return self.usedUngroupedScafs      
+        return self.usedUngroupedScafs 
+    def getOverwrittenSupers(self):
+        return self.overwrittenSupers     
     def makeAllGroups(self):
         allContigs=copy.copy(self.contigList)
         usedContigs=[]
@@ -142,38 +145,79 @@ class Chromosome(object):
             if scaffold.getChrom() == self.getName():
                 superScaf=SuperSegment([(scaffold,1,scaffold.getLength(),scaffold.getStrand()),])
                 allSuperScafs.append(superScaf)
-        sortable=[]
-        for superScaf in allSuperScafs:
-            sortable.append((superScaf, superScaf.getFirstCoordinate(base)))
-        sortable=sorted(sortable, key=itemgetter(1))
-        onlyScafs=[sup[0] for sup in sortable]
-        self.superScaffolds=onlyScafs
+                
+        self.arrangeSuperScafs(allSuperScafs, base)
         
-        for scaffold in totalUsed:
-            if Contig.ungroupedChrom in scaffold:
-                self.usedUngroupedScafs.append(scaffold)
+        #Record if any of the ungroupedChrom scaffolds were included. Only use this if actually using an ungroupedChrom!
+        if Contig.ungroupedChrom:
+            for scaffold in totalUsed:
+                if Contig.ungroupedChrom in scaffold:
+                    self.usedUngroupedScafs.append(scaffold) 
+       
+    def arrangeSuperScafs(self,superScafList, base):        
+        sortable=[]
+        include=[]
+        #first, sort the superScaffolds by whatever metric is specified by base
+        for superScaf in superScafList:
+            firstCoord=superScaf.getSortCoordinates(base)[0]
+            lastCoord=superScaf.getSortCoordinates(base)[1]
+            sortable.append((superScaf,firstCoord, lastCoord))   
+        #want to sort by start position, earliest first, and then size, largest first. The following two lines accomplish this.
+        sortable=sorted(sortable, key=itemgetter(2), reverse=True)
+        sortable=sorted(sortable, key=itemgetter(1))
+        
+        #Then, get rid of scaffolds that have been overwritten and put them in a separate variable. Some of these are going to be duplicates; I don't know why. 
+        include.append(sortable[0])
+        for sortScaf in sortable[1:]:    
+            lastIn=include[-1]
+            if lastIn[2]>sortScaf[2]:
+                self.overwrittenSupers.append(sortScaf[0])
+            elif lastIn[2]==sortScaf[2]:
+                pass
+            elif lastIn[2]>sortScaf[1]:
+                if (lastIn[0].getJoinType()=="ext") and ("Ns" in sortScaf[0].getPartsInOrder()[0].getName()):
+                    sortScaf[0].getPartsInOrder()[0].start+=lastIn[2]-sortScaf[1]+1
+                    include.append(sortScaf)
+                elif (sortScaf[0].getJoinType()=="ext") and ("Ns" in lastIn[0].getPartsInOrder()[0].getName()):
+                    lastIn[0].getPartsInOrder()[0].end-=lastIn[2]-sortScaf[1]-1
+                    include.append(sortScaf)
+                else:
+                    include.append(sortScaf)
+            else:
+                include.append(sortScaf)
+        onlyScafs=[sup[0] for sup in include]
+        self.superScaffolds=onlyScafs
+
         
        
-    def writeOverviewResults(self):
-        f=open(self.getName()+"coordinates.txt", "w")
-        env=open(self.getName()+"envelopers.txt","w")
+    def writeCoordinates(self, superScafList, overwritten):
+        if overwritten:
+            nameBase=self.getName()+"_overwrittenScaffolds"
+            f=open(nameBase+".txt", "w")
+        else:
+            nameBase=self.getName()+"_"
+            f=open(nameBase+"coordinates.txt", "w")
         groupCount=0
         coords=[]
-        envs=[]
-        reps=[]
-        for superScaf in self.getSuperScaffolds():
+        for superScaf in superScafList:
             if superScaf.printSuperSeg() not in coords:
-                f.write(self.getName()+"_number_" + str(groupCount) + "\n")
+                f.write(nameBase+"number_" + str(groupCount) + "\n")
                 f.write(superScaf.printSuperSeg()+"\n")
                 groupCount+=1
                 coords.append(superScaf.printSuperSeg())
+        f.close()
+            
+    def writeOverviewResults(self):
+        env=open(self.getName()+"_envelopers.txt","w")
+        envs=[]
+        reps=[]
         for group in self.getGroups():
             fullJoin=group.getFullGroupJoin()
             if fullJoin !=[]:# and group.printGroupEnvelopers() not in envs:
                 env.write(group.printGroupEnvelopers())
                 envs.append(group.printGroupEnvelopers())
                 reps+=(group.getContigReports())
-        f.close()
+
         env.close()
         write_csv(self.getName()+"report.csv",reps)
         
