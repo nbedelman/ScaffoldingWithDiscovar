@@ -1,3 +1,5 @@
+#!/bin/env python
+
 #coordinatesToTSV.py
 #Some aspects of this script are specific to Dryas!
 import sys

@@ -57,16 +57,16 @@ def makeGenomeMap(genome,Nlength,namePrefix="name"):
         Nchunks=re.findall(Npattern,stringChrom)
         seqChunks=re.split(Npattern,stringChrom)
         for chunk in range(len(Nchunks)):
-            if pos+len(seqChunks[chunk]) > pos+1:
-                mapFile.write('''%s\t%s\t%s\t%s\t%s\t%s\n''' % (chromName, str(pos+1), pos+len(seqChunks[chunk]),chromName+"_"+str(contig),"500","+"))
+            if len(seqChunks[chunk]) > 1:
+                mapFile.write('''%s\t%s\t%s\t%s\t%s\t%s\n''' % (chromName, str(pos), pos+len(seqChunks[chunk]),chromName+"_"+str(contig),"500","+"))
             pos=pos+len(seqChunks[chunk])
-            if pos+len(Nchunks[chunk]) > pos+1:
-                mapFile.write('''%s\t%s\t%s\t%s\t%s\t%s\n''' % (chromName, str(pos+1), pos+len(Nchunks[chunk]),"Ns_"+str(nNum),"500","+"))
+            if len(Nchunks[chunk]) > 1:
+                mapFile.write('''%s\t%s\t%s\t%s\t%s\t%s\n''' % (chromName, str(pos), pos+len(Nchunks[chunk]),"Ns_"+str(nNum),"500","+"))
             pos=pos+len(Nchunks[chunk])
             contig+=1
             nNum+=1
-        if pos+len(seqChunks[-1]) > pos+1:
-            mapFile.write('''%s\t%s\t%s\t%s\t%s\t%s\n''' % (chromName, str(pos+1), pos+len(seqChunks[-1]),chromName+"_"+str(contig),"500","+"))
+        if len(seqChunks[-1]) > 1:
+            mapFile.write('''%s\t%s\t%s\t%s\t%s\t%s\n''' % (chromName, str(pos), pos+len(seqChunks[-1]),chromName+"_"+str(contig),"500","+"))
     mapFile.close()
 
 makeGenomeMap(genome,Nlength,namePrefix)

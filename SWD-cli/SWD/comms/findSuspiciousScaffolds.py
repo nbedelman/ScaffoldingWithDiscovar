@@ -1,4 +1,7 @@
+#!/bin/env python
+
 import csv
+import sys
 
 def lengthsDict(tsvFile):
     lengthFile=open(tsvFile, "r")
@@ -30,7 +33,7 @@ def compareLengths(tsvFile, lengthDict):
         except ValueError:
             pass
     return outDict
- 
+
 
 def extractProblemScaffs(comparisonDict):
     problemScaffs={}
@@ -51,12 +54,12 @@ def write_csv(outFile, comparisonDict,):
         comparisonSeq.append(entry_as_seq)
     a.writerows(comparisonSeq)
     fp.close()
-    
+
 #Run the functions#
 
-lengthFile="data/Hmel2/lengthKey.tsv"   
-coordinateFile="results/finalAssembly/160810_manuallyEditedOverlaps_round3/Hmel2_discoScaffolded_full_160810.tsv"          
-                                             
+lengthFile=sys.argv[1]
+coordinateFile=sys.argv[2]
+
 lengths=lengthsDict(lengthFile)
 comparisonDict=compareLengths(coordinateFile,lengths)
 problemScaffs=extractProblemScaffs(comparisonDict)
