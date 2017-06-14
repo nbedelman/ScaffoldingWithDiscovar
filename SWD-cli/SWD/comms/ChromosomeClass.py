@@ -170,9 +170,9 @@ class Chromosome(object):
         include.append(sortable[0])
         for sortScaf in sortable[1:]:    
             lastIn=include[-1]
-            if lastIn[2]>sortScaf[2]:
+            if (lastIn[1]<sortScaf[1]) and (lastIn[2]>sortScaf[2]):
                 self.overwrittenSupers.append(sortScaf[0])
-            elif lastIn[2]==sortScaf[2]:
+            elif (lastIn[2]==sortScaf[2]) or (lastIn[1]==sortScaf[1]):
                 pass
             elif lastIn[2]>sortScaf[1]:
                 if (lastIn[0].getJoinType()=="ext") and ("Ns" in sortScaf[0].getPartsInOrder()[0].getName()):

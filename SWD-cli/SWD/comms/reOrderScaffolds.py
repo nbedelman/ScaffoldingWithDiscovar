@@ -32,7 +32,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
         *discoOrder.fasta: fasta file with the result of using discovar to join reference scaffolds
     '''
     print ("reading contigs")
-    #If you don't have an "ungrouped" chrom, or you don't want to use it, just put in None for ungroupedChrom.
+    #If you don't have an "ungrouped" chrom, or you don't want to use it as such, just put in None for ungroupedChrom.
     Contig.ungroupedChrom=ungroupedChrom
     Group.consecutiveOnly=consecutiveOnly
     rawContigs=readAllContigs(bedDirectory, reportDirectory)
@@ -95,7 +95,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
         unGrouped.writeCoordinates(chromosome.getOverwrittenSupers(), overwritten=True)
         unGrouped.writeOverviewResults()
         print("wrote results")
-        chromosome.writeFasta(originalGenome, discovarAssembly)
+        unGrouped.writeFasta(originalGenome, discovarAssembly)
     print ("done")
     print ("COMPLETED")
     return chromosomes

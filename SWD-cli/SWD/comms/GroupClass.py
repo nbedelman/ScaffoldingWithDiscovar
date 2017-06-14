@@ -265,6 +265,9 @@ class Group(object):
                         #This happens in some complex enveloper cases. There are no shared scaffolds between the superScaffolds, but the contig maps to both of them. Here, I essentially save the join for the next iteration.
                         if joinedSupers.getFirstOverlap(toJoin, partType=Contig):
                             notJoined.append(superScaffolds[index]) 
+                    except AmbiguousJoinError:
+                        #Another complex enveloper case; I don't want to include the second superScaffold(here superScaffolds[index]), so I can't put it in notJoined like before. Just skip it.
+                        pass
                 else:
                     notJoined.append(superScaffolds[index]) 
                 
@@ -272,7 +275,8 @@ class Group(object):
                 split=self.insideOrUnjoinable(joinedSupers, notJoined)
                 joinedSupers=split[0]
                 unJoinable=split[1]
-                if unJoinable != []:
+                if (unJoinable != []) and (not intraContig):
+                    #only want to make new groups if we're combining contigs. Each contig is only allowed to to one thing per round!
                     allContigs=[]
                     allScaffolds=[]
                     for unJoined in unJoinable:
@@ -367,6 +371,10 @@ class Group(object):
             
             furthestFromEnd=distFromEnd.index(max(distFromEnd))
             endSuper=supers[furthestFromEnd]
+            
+            #Since this is supposedly a new info join, the start and end superScaffolds should be different. If they're not, it's an ambiguous join and we shouldn't use it.
+            if startSuper==endSuper:
+                raise AmbiguousJoinError(overlappingPart)
         else:
             closestToStart=distFromStart.index(min(distFromStart))
             startSuper=supers[closestToStart]
@@ -711,8 +719,11 @@ class Group(object):
         seg2=copy.copy(segmentPair[1])
         if seg1.getOriginalStrand()==seg2.getOriginalStrand():
             return self.sameDirectionBranch(seg1,seg2, joinType)
-        else:
+        #With the consecutiveOnly flag, we ONLY want the simplest, map-through joins. We don't re-orient scaffolds. 
+        elif not Group.consecutiveOnly:
             return self.diffDirectionBranch(seg1,seg2, joinType)
+        else:
+            return
     
     def sameDirectionBranch(self, seg1,seg2, joinType):
         #print "sameDirectionBranch"
@@ -759,8 +770,13 @@ class Group(object):
         distFromScafEnd=[]
         scaffolds=[copy.copy(seg1.getOverlap()[0]),copy.copy(seg2.getOverlap()[0])]
         if Group.consecutiveOnly:
-            if abs(scaffolds[0].getNumber()-scaffolds[1].getNumber())>1:
-                return 
+            # if we're doing consecutiveOnly, only want the simplest "map-through" joins.
+            if seg1.getStrand()=="+":
+                if (scaffolds[1].getNumber()-scaffolds[0].getNumber()) != 1:
+                    return 
+            elif seg1.getStrand()=="-":
+                if (scaffolds[0].getNumber()-scaffolds[1].getNumber()) != 1:
+                    return 
         contig=copy.copy(seg1.getContig())
         output=''
         if seg1.getStrand() == '+' and self.distanceBetweenSegsChecks(seg1,seg2):
