@@ -16,7 +16,7 @@ from PartClass import *
 from GroupClass import *
 from ErrorClasses import *
 
-def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungroupedChrom='', combineMethod="first", reportDirectory=None):
+def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungroupedChrom='', combineMethod="first", reportDirectory=None, consecutiveOnly=False):
     '''runs the full program.
     Takes:
         bedDirectory: a directory containing a bed file for each discovar contig's alignment to genome
@@ -32,7 +32,9 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
         *discoOrder.fasta: fasta file with the result of using discovar to join reference scaffolds
     '''
     print ("reading contigs")
+    #If you don't have an "ungrouped" chrom, or you don't want to use it, just put in None for ungroupedChrom.
     Contig.ungroupedChrom=ungroupedChrom
+    Group.consecutiveOnly=consecutiveOnly
     rawContigs=readAllContigs(bedDirectory, reportDirectory)
     print ("done")
     print ("culling extraneous contig sub-alignments")
@@ -63,31 +65,37 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
             print (chromosome.getName())
             chromosome.makeAllGroups()
             print ("made all groups")
-            numGroups=len(chromosome.getGroups())
-            for group in range(numGroups):
-                chromosome.getGroups()[group].makeSuperScaffolds()
+            #changed this on 6/14/17 so I can recycle parts of groups that didn't really belong.
+            #numGroups=len(chromosome.getGroups())
+            for group in chromosome.getGroups():#range(numGroups):
+                group.makeSuperScaffolds() #chromosome.getGroups()[group].makeSuperScaffolds()
             chromosome.combineGroups(combineMethod)
             usedUngroupedScafs+=chromosome.getUsedUngroupedScafs()
             print("combined groups")
+            chromosome.writeCoordinates(chromosome.getSuperScaffolds(),overwritten=False)
+            chromosome.writeCoordinates(chromosome.getOverwrittenSupers(), overwritten=True)
             chromosome.writeOverviewResults()
             print("wrote results")
             chromosome.writeFasta(originalGenome, discovarAssembly)
             print ("done")
         else:
             unGrouped=chromosome
-    unGrouped.removeScaffolds(usedUngroupedScafs)
-    print ("writing output")
-    print (unGrouped.getName())
-    unGrouped.makeAllGroups()
-    print ("made all groups")
-    numGroups=len(unGrouped.getGroups())
-    for group in range(numGroups):
-        unGrouped.getGroups()[group].makeSuperScaffolds()
-    unGrouped.combineGroups(combineMethod)
-    print("combined groups")
-    unGrouped.writeOverviewResults()
-    print("wrote results")
-    chromosome.writeFasta(originalGenome, discovarAssembly)
+    if Contig.ungroupedChrom:
+        unGrouped.removeScaffolds(usedUngroupedScafs)
+        print ("writing output")
+        print (unGrouped.getName())
+        unGrouped.makeAllGroups()
+        print ("made all groups")
+        numGroups=len(unGrouped.getGroups())
+        for group in range(numGroups):
+            unGrouped.getGroups()[group].makeSuperScaffolds()
+        unGrouped.combineGroups(combineMethod)
+        print("combined groups")
+        unGrouped.writeCoordinates(chromosome.getSuperScaffolds(),overwritten=False)
+        unGrouped.writeCoordinates(chromosome.getOverwrittenSupers(), overwritten=True)
+        unGrouped.writeOverviewResults()
+        print("wrote results")
+        chromosome.writeFasta(originalGenome, discovarAssembly)
     print ("done")
     print ("COMPLETED")
     return chromosomes

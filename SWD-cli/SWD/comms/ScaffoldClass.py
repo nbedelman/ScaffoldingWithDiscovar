@@ -16,6 +16,7 @@ class Scaffold(object):
         self.start=int(atts[1])
         self.end=int(atts[2])
         self.name=atts[3]
+        self.number=int(self.name.split("_")[-1])
         self.score=int(atts[4])
         self.strand=atts[5].strip("\n")
         self.overlaps=[]
@@ -34,6 +35,8 @@ class Scaffold(object):
         return self.end
     def getName(self):
         return self.name
+    def getNumber(self):
+        return self.number
     def getLength(self):
         return self.getEnd()-self.getStart()+1
     def getStrand(self):
