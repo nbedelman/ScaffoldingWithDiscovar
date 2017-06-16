@@ -50,35 +50,35 @@ chainedMafRefOut=$outBase/chainedMaf/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_s
 chainedMafQuerOut=$outBase/chainedMaf/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained_quer.maf
 
 #find local alignments between query sequences and reference sequences
-# SWD.py lastAlign $referenceDB $query $lastalConfig | maf-sort.sh > $alignOut
-#
-# #follow the chain and net protocol; modified from  http://genomewiki.ucsc.edu/index.php/Whole_genome_alignment_howto
-# #first, make the genome sizes file if they don't exist
-# if [ ! -f $referenceSize ]; then
-#     faSize $referenceAssembly -detailed > $referenceSize
-# fi
-# if [ ! -f $querySize ]; then
-#     faSize $queryAssembly -detailed > $querySize
-# fi
-#
-# #then, convert the genomes to 2bit format if that hasn't happened yet
-# if [ ! -f $referenceTwoBit ]; then
-#     faToTwoBit $referenceAssembly $referenceTwoBit
-# fi
-# if [ ! -f $queryTwoBit ]; then
-#     faToTwoBit $queryAssembly $queryTwoBit
-# fi
-# #convert the last output to axt
-# maf-convert axt $alignOut > $axtOut
-# #sort the axt
-# axtSort $axtOut $axtSorted
-# #make chains
-# axtChain -linearGap=medium -scoreScheme=$scoreScheme $axtSorted $referenceTwoBit $queryTwoBit $chainOut
+SWD.py lastAlign $referenceDB $query $lastalConfig | maf-sort.sh > $alignOut
+
+#follow the chain and net protocol; modified from  http://genomewiki.ucsc.edu/index.php/Whole_genome_alignment_howto
+#first, make the genome sizes file if they don't exist
+if [ ! -f $referenceSize ]; then
+    faSize $referenceAssembly -detailed > $referenceSize
+fi
+if [ ! -f $querySize ]; then
+    faSize $queryAssembly -detailed > $querySize
+fi
+
+#then, convert the genomes to 2bit format if that hasn't happened yet
+if [ ! -f $referenceTwoBit ]; then
+    faToTwoBit $referenceAssembly $referenceTwoBit
+fi
+if [ ! -f $queryTwoBit ]; then
+    faToTwoBit $queryAssembly $queryTwoBit
+fi
+#convert the last output to axt
+maf-convert axt $alignOut > $axtOut
+#sort the axt
+axtSort $axtOut $axtSorted
+#make chains
+axtChain -linearGap=medium -scoreScheme=$scoreScheme $axtSorted $referenceTwoBit $queryTwoBit $chainOut
 #make nets
-chainNet -minScore=3000 $chainOut $referenceSize $querySize $refNetOut $queryNetOut
+chainNet -minScore=2000 $chainOut $referenceSize $querySize $refNetOut $queryNetOut
 #convert the net back into axt
-netToAxt -maxGap=1000 $refNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtRefOut
-netToAxt -maxGap=1000 $queryNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtQuerOut
+netToAxt -maxGap=300 $refNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtRefOut
+netToAxt -maxGap=300 $queryNetOut $chainOut $referenceTwoBit $queryTwoBit $chainedAxtQuerOut
 #sort and convert the chained axt back into maf
 axtSort $chainedAxtRefOut  $chainedAxtRefOut.sorted.axt
 axtSort $chainedAxtQuerOut  $chainedAxtQuerOut.sorted.axt

@@ -16,8 +16,15 @@ newAssembly=$2
 ungroupedChrom=$3
 bedDirectory=$4
 map=$5
+consecutiveOnly=$6
 
-SWD.py reOrder --refGenome $refGenome --newAssembly $newAssembly --ungroupedChrom $ungroupedChrom $bedDirectory $map
+if [ "$consecutiveOnly" = "True" ];
+then
+  SWD.py reOrder --refGenome $refGenome --newAssembly $newAssembly --ungroupedChrom $ungroupedChrom --consecutiveOnly $bedDirectory $map
+else
+  SWD.py reOrder --refGenome $refGenome --newAssembly $newAssembly --ungroupedChrom $ungroupedChrom $bedDirectory $map
+fi
+
 
 mkdir -p chromosomeResults
 mv *discoOrder* chromosomeResults
