@@ -49,8 +49,14 @@ parser_reOrder.add_argument('--refGenome',type=str,
                     help='Fasta file of reference genome')
 parser_reOrder.add_argument('--newAssembly',type=str,
                     help='Fasta file of new assembly')
-parser_reOrder.add_argument('--ungroupedChrom',default='',type=str,
+parser_reOrder.add_argument('--ungroupedChrom',default=None,type=str,
                     help='name of "chromosome" of ungrouped scaffolds, if it exists')
+parser_reOrder.add_argument('--consecutiveOnly',action='store_true',
+                    help='option to only join the obvious consecutive scaffolds')
+parser_reOrder.add_argument('--combineMethod',default="first",type=str,
+                    help='how to arrange the scaffolds when creating the new assembly')
+parser_reOrder.add_argument('--reportDirectory',default=None,type=str,
+                    help='option to only join the obvious consecutive scaffolds')
 parser_reOrder.set_defaults(which='reOrder')
 
 
@@ -155,8 +161,8 @@ if arguments.which=='overviewToIntersects':
 
 #############The reOrderScaffolds Command#############
 
-def reOrder(bedDirectory,map,refGenome,newAssembly,ungroupedChrom):
-	reOrderScaffolds.runAll(bedDirectory,map,refGenome,newAssembly,ungroupedChrom)
+def reOrder(bedDirectory,map,refGenome,newAssembly,ungroupedChrom, combineMethod, reportDirectory, consecutiveOnly):
+	reOrderScaffolds.runAll(bedDirectory,map,refGenome,newAssembly,ungroupedChrom, combineMethod, reportDirectory, consecutiveOnly)
 
 if arguments.which=='reOrder':
-	reOrder(arguments.bedDirectory,arguments.map,arguments.refGenome,arguments.newAssembly,arguments.ungroupedChrom)
+	reOrder(arguments.bedDirectory,arguments.map,arguments.refGenome,arguments.newAssembly,arguments.ungroupedChrom, arguments.combineMethod, arguments.reportDirectory, arguments.consecutiveOnly)

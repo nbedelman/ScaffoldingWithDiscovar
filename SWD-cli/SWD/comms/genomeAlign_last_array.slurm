@@ -15,7 +15,7 @@
 #SBATCH -e errs/lastal%A_%a.err # Standard error
 
 export PATH=$PATH:/n/mallet_lab/edelman/software/kentUtils/bin
-#export PATH=$PATH:/n/regal/mallet_lab/edelman/dryasAssembly/scripts
+export PATH=$PATH:/n/regal/mallet_lab/edelman/dryasAssembly/scripts
 
 config=$1
 source $config

@@ -11,6 +11,7 @@
 #SBATCH -o reOrderScaffolds.out # Standard out goes to this file
 #SBATCH -e reOrderScaffolds.err # Standard err goes to this file
 
+
 refGenome=$1
 newAssembly=$2
 ungroupedChrom=$3
