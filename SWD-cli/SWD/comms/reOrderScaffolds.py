@@ -31,7 +31,6 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
             ENVELOPING SCAF: <list of enveloped scafs> <list of "evidence" in form (DISCOVAR CONTIG, [SCAFFOLDS COMBINED BY CONTIG])>
         *discoOrder.fasta: fasta file with the result of using discovar to join reference scaffolds
     '''
-    # print(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungroupedChrom, combineMethod, reportDirectory, consecutiveOnly)
     print ("reading contigs")
     #If you don't have an "ungrouped" chrom, or you don't want to use it as such, just put in None for ungroupedChrom.
     Contig.ungroupedChrom=ungroupedChrom
@@ -81,7 +80,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
             print ("done")
         else:
             unGrouped=chromosome
-    if Contig.ungroupedChrom and unGrouped:
+    if Contig.ungroupedChrom:
         unGrouped.removeScaffolds(usedUngroupedScafs)
         print ("writing output")
         print (unGrouped.getName())
