@@ -43,13 +43,13 @@ class Chromosome(object):
     def getGroups(self):
         return self.groups
     def getUngroupedScaffolds(self):
-        return self.unGroupedScaffolds 
+        return self.unGroupedScaffolds
     def getSuperScaffolds(self):
-        return self.superScaffolds 
+        return self.superScaffolds
     def getUsedUngroupedScafs(self):
-        return self.usedUngroupedScafs 
+        return self.usedUngroupedScafs
     def getOverwrittenSupers(self):
-        return self.overwrittenSupers     
+        return self.overwrittenSupers
     def makeAllGroups(self):
         allContigs=copy.copy(self.contigList)
         usedContigs=[]
@@ -64,22 +64,22 @@ class Chromosome(object):
         for scaffold in self.getScaffoldList():
             if not self.checkIfUsed(usedScaffolds, scaffold):
                 self.unGroupedScaffolds.append(scaffold)
-                
+
     def removeScaffolds(self, listOfScafNames):
         currentScafs=self.getScaffoldList()
         self.scaffoldList=[]
         for s in currentScafs:
             if s.getName() not in listOfScafNames:
                 self.scaffoldList.append(s)
-                
+
     def checkIfUsed(self,aList, anObject):
         used=False
         for item in aList:
             if item.getName() == anObject.getName():
                 used=True
                 break
-        return used    
-    
+        return used
+
     def makeGroup(self,contig):
         if self.getName() != Contig.ungroupedChrom:
             contig_list=[contig,]
@@ -92,7 +92,7 @@ class Chromosome(object):
                 return Group([contig,],contig.getConnectors(),self)
             else:
                 return Group([contig,],[],self)
-        
+
     def backAndForth(self,contigList,scaffoldList):
         startContigs=len(contigList)
         startScaffolds=len(scaffoldList)
@@ -106,13 +106,13 @@ class Chromosome(object):
             for overlappingScaffold in contig.getConnectors():
                 #Need to make sure we're not connecting across different chromosomes. Don't add scaffolds outside the current chrom/ungroupedChroms
                 if (overlappingScaffold.getChrom() == self.getName()) or (overlappingScaffold.getChrom() == Contig.ungroupedChrom):
-                    if not self.checkIfUsed(newScaffolds, overlappingScaffold):   
-                        newScaffolds.append(overlappingScaffold)       
+                    if not self.checkIfUsed(newScaffolds, overlappingScaffold):
+                        newScaffolds.append(overlappingScaffold)
         if startContigs == len(newContigs) and startScaffolds==len(newScaffolds):
             return (newContigs,newScaffolds)
         else:
             return self.backAndForth(newContigs,newScaffolds)
-            
+
     def combineGroups(self, base):
         #parallelize form, and put all the segments in a single place
         allSuperScafs=[]
@@ -131,44 +131,44 @@ class Chromosome(object):
                         if (ignore.getName() not in unGroupedNames) and (not self.checkIfUsed(self.unGroupedScaffolds, ignore)):
                             totalUnused.append(ignore)
                             unGroupedNames.append(ignore.getName())
-        
+
             else:
                 for scaffold in group.getScaffoldList():
                     if (not self.checkIfUsed(self.unGroupedScaffolds, scaffold)) and (scaffold.getName() not in totalUsed):
                         totalUnused.append(scaffold)
-        
+
         for unUsed in totalUnused:
             if not unUsed.getName() in totalUsed:
                 self.unGroupedScaffolds.append(unUsed)
-                
+
         for scaffold in self.getUngroupedScaffolds():
             if scaffold.getChrom() == self.getName():
-                superScaf=SuperSegment([(scaffold,1,scaffold.getLength(),scaffold.getStrand()),])
+                superScaf=SuperSegment([(scaffold,0,scaffold.getLength(),scaffold.getStrand()),])
                 allSuperScafs.append(superScaf)
-                
+
         self.arrangeSuperScafs(allSuperScafs, base)
-        
+
         #Record if any of the ungroupedChrom scaffolds were included. Only use this if actually using an ungroupedChrom!
         if Contig.ungroupedChrom:
             for scaffold in totalUsed:
                 if Contig.ungroupedChrom in scaffold:
-                    self.usedUngroupedScafs.append(scaffold) 
-       
-    def arrangeSuperScafs(self,superScafList, base):        
+                    self.usedUngroupedScafs.append(scaffold)
+
+    def arrangeSuperScafs(self,superScafList, base):
         sortable=[]
         include=[]
         #first, sort the superScaffolds by whatever metric is specified by base
         for superScaf in superScafList:
             firstCoord=superScaf.getSortCoordinates(base)[0]
             lastCoord=superScaf.getSortCoordinates(base)[1]
-            sortable.append((superScaf,firstCoord, lastCoord))   
+            sortable.append((superScaf,firstCoord, lastCoord))
         #want to sort by start position, earliest first, and then size, largest first. The following two lines accomplish this.
         sortable=sorted(sortable, key=itemgetter(2), reverse=True)
         sortable=sorted(sortable, key=itemgetter(1))
-        
-        #Then, get rid of scaffolds that have been overwritten and put them in a separate variable. Some of these are going to be duplicates; I don't know why. 
+
+        #Then, get rid of scaffolds that have been overwritten and put them in a separate variable. Some of these are going to be duplicates; I don't know why.
         include.append(sortable[0])
-        for sortScaf in sortable[1:]:    
+        for sortScaf in sortable[1:]:
             lastIn=include[-1]
             if (lastIn[1]<sortScaf[1]) and (lastIn[2]>sortScaf[2]):
                 self.overwrittenSupers.append(sortScaf[0])
@@ -188,8 +188,8 @@ class Chromosome(object):
         onlyScafs=[sup[0] for sup in include]
         self.superScaffolds=onlyScafs
 
-        
-       
+
+
     def writeCoordinates(self, superScafList, overwritten):
         if overwritten:
             nameBase=self.getName()+"_overwrittenScaffolds"
@@ -206,7 +206,7 @@ class Chromosome(object):
                 groupCount+=1
                 coords.append(superScaf.printSuperSeg())
         f.close()
-            
+
     def writeOverviewResults(self):
         env=open(self.getName()+"_envelopers.txt","w")
         envs=[]
@@ -220,7 +220,7 @@ class Chromosome(object):
 
         env.close()
         write_csv(self.getName()+"report.csv",reps)
-        
+
     def writeFasta(self, originalScaffolds, originalDiscoContigs):
         originalScafs=SeqIO.index(originalScaffolds, "fasta")
         originalDiscos=SeqIO.index(originalDiscoContigs, "fasta")
@@ -236,11 +236,11 @@ class Chromosome(object):
                 for record in records:
                     items=record.split(",")
                     name=items[0]
-                    if int(items[1])<1:
+                    if int(items[1])<0:
                         start=0
                     else:
-                        start=int(items[1])-1
-                    end=int(items[2])-1
+                        start=int(items[1])
+                    end=int(items[2])
                     direction=items[3]
                     try:
                         original=originalScafs[name]
@@ -257,5 +257,3 @@ class Chromosome(object):
                 groupCount+=1
             coords.append(superScaf.printSuperSeg())
         SeqIO.write(newScafs,open(self.getName()+"discoOrder.fasta", "w"), "fasta")
-            
-            

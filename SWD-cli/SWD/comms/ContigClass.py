@@ -43,7 +43,7 @@ class Contig(object):
     def getName(self):
         return self.name
     def getLength(self):
-        return self.getRelEnd()-self.getRelStart()+1
+        return self.getRelEnd()-self.getRelStart()
     def getStrand(self):
         return self.strand
     def getRelStart(self):

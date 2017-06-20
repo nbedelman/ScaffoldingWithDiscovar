@@ -59,8 +59,9 @@ def write_csv(outFile, comparisonDict,):
 
 lengthFile=sys.argv[1]
 coordinateFile=sys.argv[2]
+outFile=sys.argv[3]
 
 lengths=lengthsDict(lengthFile)
 comparisonDict=compareLengths(coordinateFile,lengths)
 problemScaffs=extractProblemScaffs(comparisonDict)
-write_csv("lengthComparison.csv",problemScaffs)
+write_csv(outFile,problemScaffs)

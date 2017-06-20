@@ -17,7 +17,7 @@ for subdir, dirs, files in os.walk(inputDir):
             chrom=SeqIO.parse(inputDir+"/"+file,"fasta")
             thisChrom=SeqIO.SeqRecord(seq="", id=header)
             for record in chrom:
-                if "Ns_" in record.id:
+                if "Ns_" in record.description:
                     prevNs=True
                     thisChrom.seq+=record.seq
                 else:

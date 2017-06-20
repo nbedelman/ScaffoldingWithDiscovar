@@ -27,4 +27,4 @@ fi
 
 
 mkdir -p chromosomeResults
-mv *discoOrder* chromosomeResults
+mv *discoOrder* *envelopers* *coordinates* *overwritten* *report* chromosomeResults

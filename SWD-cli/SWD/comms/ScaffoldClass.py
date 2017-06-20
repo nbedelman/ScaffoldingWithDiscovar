@@ -38,7 +38,7 @@ class Scaffold(object):
     def getNumber(self):
         return self.number
     def getLength(self):
-        return self.getEnd()-self.getStart()+1
+        return self.getEnd()-self.getStart()
     def getStrand(self):
         if not self.isFlipped:
             return self.strand
