@@ -20,6 +20,7 @@ export PATH=$PATH:/n/mallet_lab/edelman/software/kentUtils/bin
 config=$1
 source $config
 
+currentDir=$(pwd)
 #create the output directories
 mkdir -p $outBase
 mkdir -p $outBase/sizes
@@ -102,3 +103,7 @@ done
 
 cd ..
 rm -Rf ${SLURM_ARRAY_TASK_ID}_tmp
+
+#clean up intermediate files
+cd $currentDir
+rm -f $alignOut $axtOut $axtSorted $chainOut $refNetOut $queryNetOut $chainedAxtRefOut $chainedAxtQuerOut $chainedMafRefOut $chainedMafQuerOut
