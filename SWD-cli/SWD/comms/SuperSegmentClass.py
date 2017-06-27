@@ -81,39 +81,39 @@ class SuperSegment(object):
             if ignore.getOverlap()[0].getName() not in usedNames:
                 ignores.append(ignore)
         return ignores
-            
+
     def reverseOrder(self):
         switched = []
         for item in reversed(self.getPartsInOrder()):
             switched.append(item)
         self.partsInOrder = switched
-    
+
     def flipSuperSegment(self):
         self.reverseOrder()
         for part in self.getPartsInOrder():
             part.flipPart()
-            
+
     def printSuperSeg(self):
         output=''
         for part in self.getPartsInOrder():
             output+=part.printPart()
         return output
-    
+
     def getScore(self):
         scores=[]
         for scaffold in self.getScaffolds():
             scores.append(scaffold.getScore())
         return max(scores)
-        
+
     def getTotalLength(self):
         lengths=[]
         for part in self.getPartsInOrder():
             lengths.append(part.getLength())
         return sum(lengths)
-    
+
     def getJoinType(self):
         return self.joinType
-    
+
     def getSortCoordinates(self, base):
         #get the first and last coordinates of the superScaffold so we can order them when creating the chromosome
         sortParts=[]
@@ -126,20 +126,24 @@ class SuperSegment(object):
             sortParts = sorted(sortParts, key=itemgetter(1,2), reverse=True)
         elif base=="first":
             sortParts = sorted(sortParts, key=itemgetter(3))
-        
+
         first = sortParts[0][0]
-        last = sortParts[-1][0] 
+        last = sortParts[-1][0]
         start= first.getBackbone().getStart()
         end=last.getBackbone().getEnd()
-        
+
         #If this superScaffold is an extension, add the contig pieces to either side so we can get rid of the abutting stretches of N's
         if self.getJoinType()=="ext":
             if self.getPartsInOrder()[0].getType()==Contig:
-                start-=self.getPartsInOrder()[0].getLength()
+                scafStart=self.getPartsInOrder()[1].getStart()
+                conPiece=self.getPartsInOrder()[0].getLength()
+                start-=(conPiece-scafStart)
             if self.getPartsInOrder()[-1].getType()==Contig:
-                end+=self.getPartsInOrder()[-1].getLength()
+                scafEnd=self.getPartsInOrder()[-2].getBackboneLength()-self.getPartsInOrder()[-2].getEnd()
+                conPiece=self.getPartsInOrder()[-1].getLength()
+                end+=conPiece-scafEnd
         return (start,end )
-        
+
     def isOverlapping(self, otherSuperSegment):
         overlaps=False
         for part in self.getPartsInOrder():
@@ -148,7 +152,7 @@ class SuperSegment(object):
                     overlaps = True
                     break
         return overlaps
-        
+
     def getFirstOverlap(self, otherSuperSegment, partType=None):
         '''assumes superSegments are oriented in the same direction'''
         thisSuperParts=[]
@@ -165,14 +169,14 @@ class SuperSegment(object):
                     return name
         #If there is no overlapping part, return false.
         return False
-    
+
     def getOverlappingIndices(self, overlapName):
         result=[]
         for part in range(len(self.getPartsInOrder())):
             if self.getPartsInOrder()[part].getName() == overlapName:
                 result.append(part)
         return result
-    
+
     def lengthBefore(self, backboneName):
         for part in range(len(self.getPartsInOrder())):
             if self.getPartsInOrder()[part].getName() == backboneName:
@@ -183,7 +187,7 @@ class SuperSegment(object):
             length += self.getPartsInOrder()[part].getLength()
         #length+=self.getPartsInOrder()[index].getStart()
         return length
-    
+
     def lengthAfter(self, backboneName):
         for part in range(len(self.getPartsInOrder())):
             if self.getPartsInOrder()[part].getName() == backboneName:
@@ -192,15 +196,15 @@ class SuperSegment(object):
         for part in range(index+1,len(self.getPartsInOrder())):
             length += self.getPartsInOrder()[part].getLength()
         #length += (self.getPartsInOrder()[index].getBackboneLength() - self.getPartsInOrder()[index].getEnd())
-        return length        
-        
+        return length
+
     def makePositive(self, backboneName):
         for part in self.getPartsInOrder():
             if part.getName() == backboneName:
                 if part.getStrand() == '-':
                     self.flipSuperSegment()
                     return
-    
+
     def alignWithBestScaf(self):
         sortParts=[]
         for part in range(len(self.getPartsInOrder())):
@@ -212,7 +216,7 @@ class SuperSegment(object):
         if bestPart.getStrand() != bestPart.getOriginalStrand():
             self.flipSuperSegment()
         return
-    
+
     def findEnvelopers(self):
         '''figure out if there are scaffolds that lie within other scaffolds
         in this superSegment.'''
@@ -237,12 +241,12 @@ class SuperSegment(object):
                     present.append(connect.getName())
             if missing != []:
                 unMatched.append((present,contig.getName(),missing))
-                
-        matched=self.findMatchingEnvelopes(unMatched, {}, 0)        
+
+        matched=self.findMatchingEnvelopes(unMatched, {}, 0)
         self.enveloped=unUsed
         self.envelopers=matched
-         
-                
+
+
     def findMatchingEnvelopes(self, unMatchedList, matchDict, loopCount):
         unGrounded=[]
         matches=copy.copy(matchDict)
@@ -279,9 +283,9 @@ class SuperSegment(object):
             return self.findMatchingEnvelopes(stillUnMatched, matches, loopCount)
         else:
             return matches
-                        
-        
-    
+
+
+
     def hasNewInfo(self, otherSuper):
         unique=False
         otherScaffolds=[]
@@ -291,4 +295,3 @@ class SuperSegment(object):
             if scaffold.getName() not in otherScaffolds:
                 unique=True
         return unique
-        

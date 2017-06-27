@@ -189,40 +189,73 @@ class Group(object):
             return self.extendScaffoldPositive(contig)
 
     def extendScaffoldPositive(self,contig):
+        #In some cases, we get ambiguous mappings, in which the same part of the contig maps to two places.
+        #This check makes sure that the scaffold only mapped one time, and is all in one place
+        #Specifically, asks if the expected distance between the two end segments is the same as the actual distance between them
         orderedSegs=contig.orderSegs(contig.getCombinedSegments())
-        middlePart=[(contig.getConnectors()[0], 0, contig.getConnectors()[0].getLength(), contig.getConnectors()[0].getStrand()),]
-        if orderedSegs[0].getDistanceFromScafStart() < orderedSegs[0].getConStart():
-            firstPart=[(contig,0,orderedSegs[0].getConStart()-orderedSegs[0].getDistanceFromScafStart(),contig.getStrand()),]
+        #how far apart the segs are on the contig:
+        expDistance=orderedSegs[-1].getConEnd()-orderedSegs[0].getConStart()
+        #how far apart the segs actually map:
+        obsDistance=orderedSegs[-1].getEnd()-orderedSegs[0].getStart()
+        #heuristic that if they're within 50% of the expected distance, it's probably good
+        if abs(obsDistance-expDistance)<float(expDistance)/2:
+            baseStart=0
+            baseEnd=contig.getConnectors()[0].getLength()
+
+            if orderedSegs[0].getDistanceFromScafStart() < orderedSegs[0].getConStart():
+                firstPart=[(contig,0,orderedSegs[0].getConStart(),contig.getStrand()),]
+                baseStart=orderedSegs[0].getDistanceFromScafStart()
+            else:
+                firstPart=[]
+
+            if orderedSegs[-1].getDistanceFromScafEnd() < (contig.getLength()-orderedSegs[-1].getConEnd()):
+                lastPart=[(contig,orderedSegs[-1].getConEnd(),contig.getLength(),contig.getStrand()),]
+                baseEnd=contig.getLength()-orderedSegs[-1].getDistanceFromScafEnd()
+            else:
+                lastPart=[]
+
+            middlePart=[(contig.getConnectors()[0], baseStart, baseEnd, contig.getConnectors()[0].getStrand()),]
+
+            output=firstPart+middlePart+lastPart
+            output=self.checkNegatives(output)
+            output=SuperSegment(output)
+            output.contigs.append(contig)
+            output.usedScaffolds+=[contig.getConnectors()[0],]
+            return output,[]
         else:
-            firstPart=[]
-        if orderedSegs[-1].getDistanceFromScafEnd() < (contig.getLength()-orderedSegs[-1].getConEnd()):
-            lastPart=[(contig,orderedSegs[-1].getConEnd()+orderedSegs[-1].getDistanceFromScafEnd(),contig.getLength(),contig.getStrand()),]
-        else:
-            lastPart=[]
-        output=firstPart+middlePart+lastPart
-        output=self.checkNegatives(output)
-        output=SuperSegment(output)
-        output.contigs.append(contig)
-        output.usedScaffolds+=[contig.getConnectors()[0],]
-        return output,[]
+            return self.joinScaffolds(contig)
 
     def extendScaffoldNegative(self,contig):
         orderedSegs=contig.orderSegs(contig.getCombinedSegments())
-        middlePart=[(contig.getConnectors()[0], 0, contig.getConnectors()[0].getLength(), contig.getConnectors()[0].getStrand()),]
-        if orderedSegs[0].getDistanceFromScafStart() < contig.getLength()-orderedSegs[0].getConEnd():
-            firstPart=[(contig,0,contig.getLength()-orderedSegs[0].getConEnd(),contig.getStrand()),]
+        expDistance=orderedSegs[0].getConEnd()-orderedSegs[-1].getConStart()
+        #how far apart the segs actually map:
+        obsDistance=orderedSegs[-1].getEnd()-orderedSegs[0].getStart()
+        #heuristic that if they're within 50% of the expected distance, it's probably good
+        if abs(obsDistance-expDistance)<float(expDistance)/2:
+            baseStart=0
+            baseEnd=contig.getConnectors()[0].getLength()
+
+            if orderedSegs[0].getDistanceFromScafStart() < contig.getLength()-orderedSegs[0].getConEnd():
+                firstPart=[(contig,0,contig.getLength()-orderedSegs[0].getConEnd()+1,contig.getStrand()),]
+                baseStart=orderedSegs[0].getDistanceFromScafStart()
+            else:
+                firstPart=[]
+
+            if orderedSegs[-1].getDistanceFromScafEnd() < orderedSegs[-1].getConStart():
+                lastPart=[(contig,contig.getLength()-orderedSegs[-1].getConStart()+1,contig.getLength(),contig.getStrand()),]
+                baseEnd=contig.getLength()-orderedSegs[-1].getDistanceFromScafEnd()
+            else:
+                lastPart=[]
+
+            middlePart=[(contig.getConnectors()[0], baseStart, baseEnd, contig.getConnectors()[0].getStrand()),]
+            output=firstPart+middlePart+lastPart
+            output=self.checkNegatives(output)
+            output=SuperSegment(output)
+            output.contigs.append(contig)
+            output.usedScaffolds+=[contig.getConnectors()[0],]
+            return output,[]
         else:
-            firstPart=[]
-        if orderedSegs[-1].getDistanceFromScafEnd() < orderedSegs[-1].getConStart():
-            lastPart=[(contig,contig.getLength()-orderedSegs[-1].getConStart(),contig.getLength(),contig.getStrand()),]
-        else:
-            lastPart=[]
-        output=firstPart+middlePart+lastPart
-        output=self.checkNegatives(output)
-        output=SuperSegment(output)
-        output.contigs.append(contig)
-        output.usedScaffolds+=[contig.getConnectors()[0],]
-        return output,[]
+            return self.joinScaffolds(contig)
 
     def joinScaffolds(self,contig):
         segments=[]
@@ -915,7 +948,9 @@ class Group(object):
 
     def distanceBetweenSegsChecks(self,seg1, seg2):
         #print "distanceBetweenSegsChecks"
-        return seg1.getConEnd()-seg2.getConEnd() < 1000
+        #See if segments are next to each other on the contig that they come from.
+        #updated June 26, 2017.
+        return abs(seg2.getConStart()-seg1.getConEnd()) < 1000
 
 
 

@@ -59,6 +59,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
     print ("done")
     print ("grouping within Chromosome and making super scaffolds")
     usedUngroupedScafs=[]
+    unGrouped=False
     for chromosome in chromosomes:
         if chromosome.getName()!=Contig.ungroupedChrom:
             print ("writing output")
@@ -80,7 +81,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
             print ("done")
         else:
             unGrouped=chromosome
-    if Contig.ungroupedChrom:
+    if Contig.ungroupedChrom and unGrouped:
         unGrouped.removeScaffolds(usedUngroupedScafs)
         print ("writing output")
         print (unGrouped.getName())

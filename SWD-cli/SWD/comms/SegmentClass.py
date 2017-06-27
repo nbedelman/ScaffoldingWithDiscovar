@@ -36,7 +36,7 @@ class Segment(object):
     def getOriginalStrand(self):
         return self.originalStrand
     def getConLength(self):
-        return self.getRelEnd()-self.getRelStart()+1
+        return self.getRelEnd()-self.getRelStart()
     def getContig(self):
         return self.contig
     def getConStart(self):
@@ -58,7 +58,7 @@ class Segment(object):
     def getName(self):
         return self.name
     def getLength(self):
-        return self.getEnd()-self.getStart() +1
+        return self.getEnd()-self.getStart()
     def getStrand(self):
         if self.isFlipped:
             if self.strand == '+':
@@ -92,17 +92,17 @@ class Segment(object):
                 if not scaffold.isFlipped:
                     return scaffold.getLength()-(scaffold.getEnd()-self.getEnd())
                 else:
-                    return scaffold.getLength()-(self.getStart()-scaffold.getStart())
+                    return scaffold.getLength()-(self.getStart()-scaffold.getStart()) +1
     def getConStartPos(self):
         if not self.isFlipped:
             return self.getStart()-self.getRelStart()
         else:
-            return self.getRelEnd()-self.getEnd()
+            return self.getRelEnd()-self.getEnd() +1
     def getConEndPos(self):
         if not self.isFlipped:
             return self.getConLength() - (self.getRelEnd()-self.getEnd())
         else:
-            return self.getConLength() - (self.getStart()-self.getRelStart())
+            return self.getConLength() - (self.getStart()-self.getRelStart()) +1
 
     def getDistanceFromScafStart(self):
         return self.getScafStart()

@@ -167,18 +167,26 @@ class Chromosome(object):
         sortable=sorted(sortable, key=itemgetter(1))
 
         #Then, get rid of scaffolds that have been overwritten and put them in a separate variable. Some of these are going to be duplicates; I don't know why.
+        #If dealing with contigs, adjust the N size. Otherwise, leave as is.
+        #***Assumes scaffold breaks are exactly 1000 Ns long.****
         include.append(sortable[0])
         for sortScaf in sortable[1:]:
             lastIn=include[-1]
             if (lastIn[1]<sortScaf[1]) and (lastIn[2]>sortScaf[2]):
-                self.overwrittenSupers.append(sortScaf[0])
+                if (lastIn[0].getJoinType()=="join") or (sortScaf[0].getPartsInOrder()[0].getLength()!=1000):
+                    self.overwrittenSupers.append(sortScaf[0])
+                else:
+                    include.append(sortScaf)
+
+            #ignore duplicates
             elif (lastIn[2]==sortScaf[2]) or (lastIn[1]==sortScaf[1]):
                 pass
+            #adjust the N size when the N contig is partially overlapped
             elif lastIn[2]>sortScaf[1]:
-                if (lastIn[0].getJoinType()=="ext") and ("Ns" in sortScaf[0].getPartsInOrder()[0].getName()):
+                if (lastIn[0].getJoinType()=="ext") and ("Ns" in sortScaf[0].getPartsInOrder()[0].getName()) and (sortScaf[0].getPartsInOrder()[0].getLength()!=1000):
                     sortScaf[0].getPartsInOrder()[0].start+=lastIn[2]-sortScaf[1]+1
                     include.append(sortScaf)
-                elif (sortScaf[0].getJoinType()=="ext") and ("Ns" in lastIn[0].getPartsInOrder()[0].getName()):
+                elif (sortScaf[0].getJoinType()=="ext") and ("Ns" in lastIn[0].getPartsInOrder()[0].getName())and (lastIn[0].getPartsInOrder()[0].getLength()!=1000):
                     lastIn[0].getPartsInOrder()[0].end-=lastIn[2]-sortScaf[1]-1
                     include.append(sortScaf)
                 else:
