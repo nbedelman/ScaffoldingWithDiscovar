@@ -77,7 +77,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
             chromosome.writeCoordinates(chromosome.getOverwrittenSupers(), overwritten=True)
             chromosome.writeOverviewResults()
             print("wrote results")
-            chromosome.writeFasta(originalGenome, discovarAssembly)
+            #chromosome.writeFasta(originalGenome, discovarAssembly)
             print ("done")
         else:
             unGrouped=chromosome
@@ -96,7 +96,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
         unGrouped.writeCoordinates(chromosome.getOverwrittenSupers(), overwritten=True)
         unGrouped.writeOverviewResults()
         print("wrote results")
-        unGrouped.writeFasta(originalGenome, discovarAssembly)
+        #unGrouped.writeFasta(originalGenome, discovarAssembly)
     print ("done")
     print ("COMPLETED")
     return chromosomes
@@ -152,14 +152,32 @@ def combineSegments(contigList):
 
 def readScaffold(bedFile):
     '''take a bed file
-    return a list of objects of class seqType (scaffolds or contigs), in the order they are in the file'''
-    bedList=[]
-    with open(bedFile,"r") as f:
+    return a list of objects of class scaffold, in the order they are in the file'''
+    #6/27/27 using a list format is making the findOverlaps step extremely slow. 
+    #I think a dictionary would make it faster.
+    #bedList=[]
+    #with open(bedFile,"r") as f:
+    #    for line in f:
+    #        scaf=Scaffold(line)
+    #        if not scaf.getName()=='Ns':
+    #            bedList.append(scaf)
+    #return bedList
+    bedDict={}
+    with open(bedFile, "r") as f:
         for line in f:
             scaf=Scaffold(line)
-            if not scaf.getName()=='Ns':
-                bedList.append(scaf)
-    return bedList
+            if 'Ns' not in scaf.getName():
+                try:
+                    bedDict[scaf.getChrom()][0].append(scaf)
+                except KeyError:
+                    bedDict[scaf.getChrom()]=[[scaf,],[]]
+            else:
+                try:
+                    bedDict[scaf.getChrom()][1].append(scaf)
+                except KeyError:
+                    bedDict[scaf.getChrom()]=[[],[scaf,]]
+    return bedDict
+    
 
 def groupPiecesByChromosome(contigs, scaffolds):
     chromDict={}
@@ -167,13 +185,19 @@ def groupPiecesByChromosome(contigs, scaffolds):
         try:
             chromDict[contig.getChrom()][0].append(contig)
         except KeyError:
-            chromDict[contig.getChrom()]=([contig,],[])
-    for scaffold in scaffolds:
-        if (not scaffold.getName()=="Ns"):
-            try:
-                chromDict[scaffold.getChrom()][1].append(scaffold)
-            except KeyError:
-                chromDict[scaffold.getChrom()]=([],[scaffold])
+            chromDict[contig.getChrom()]=[[contig,],[]]
+    for scaffold in scaffolds.keys():
+        #want N's as well as non-Ns here.
+        try:
+            chromDict[scaffold][1]=scaffolds[scaffold][0]+scaffolds[scaffold][1]
+        except KeyError:
+            chromDict[scaffold]=[[],scaffolds[scaffold][0]+scaffolds[scaffold][1]]
+        #updated 6/27/17 because scaffolds is now a dict.
+        #if (not scaffold.getName()=="Ns"):
+        #    try:
+        #        chromDict[scaffold.getChrom()][1].append(scaffold)
+        #    except KeyError:
+        #        chromDict[scaffold.getChrom()]=([],[scaffold])
     return chromDict
 
 

@@ -108,19 +108,34 @@ class Contig(object):
                 outString+=segment.getColor()+"\n"
                 o.write(outString)
         o.close()
-    def findConnectors(self, scaffoldList, segType):
+    def findConnectors(self, scaffoldDict, segType):
         connects=[]
+        removeIndices=[]
         if segType=='good':
             segList=self.getGoodSegments()
             markScaffolds=False
         elif segType=='combined':
             segList=self.getCombinedSegments()
             markScaffolds=True
-        for segment in segList:
-            overlapper=segment.findOverlaps(scaffoldList, markScaffolds)
-            for scaffold in overlapper:
+        for idx, segment in enumerate(segList):
+            #If the segment maps uniquely, this will return the connecting scaffold.
+            #If it does not, this will return the segment split into two at the scaffold break
+            #These have to be run through the process again.
+            overlapper=segment.findOverlaps(scaffoldDict, markScaffolds)
+            if len(overlapper)==1:
+                scaffold=overlapper[0]
                 if (not scaffold in connects) and (not scaffold.getName() == "Ns"):
                     connects.append(scaffold)
+            else:
+                #This can only happen the first time, which means the segList will be goodSegments.
+                segList+=overlapper
+                #self.goodSegments+=overlapper
+                removeIndices.append(idx)
+        
+        #If there are multiple to remove, must remove the largest first so it doesn't screw up the order.
+        for index in sorted(removeIndices, reverse=True):
+            del self.goodSegments[index]
+        
         self.connectors=connects
 
     def orderSegs(self,segmentList):

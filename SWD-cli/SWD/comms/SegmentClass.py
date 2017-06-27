@@ -110,38 +110,108 @@ class Segment(object):
     def getDistanceFromScafEnd(self):
         for i in self.getOverlap():
             return i.getLength()-self.getScafEnd()
-
-    def findOverlaps(self, scaffoldList, markScaffolds):
-        overlaps=[]
-        for scaffold in scaffoldList:
-            if scaffold.getChrom() == self.getChrom():
-                oLength=0
-                if (self.getStart() >= scaffold.getStart() and self.getStart() <= scaffold.getEnd()):
-                    if (self.getEnd() >= scaffold.getStart() and self.getEnd() <= scaffold.getEnd()):
-                        oLength=self.getLength()
-                        overlaps.append((scaffold, oLength))
-                        if (not self.checkIfUsed(scaffold.getOverlaps(), self.getContig())) and markScaffolds:
-                            scaffold.overlaps.append(self.getContig())
-                    else:
-                        oLength=scaffold.getEnd()-self.getStart()
-                        if (not self.checkIfUsed(scaffold.getOverlaps(), self.getContig())) and markScaffolds:
-                            scaffold.overlaps.append(self.getContig())
-                elif (self.getEnd() >= scaffold.getStart() and self.getEnd() <= scaffold.getEnd()):
-                    oLength=self.getEnd()-scaffold.getStart()
-                    overlaps.append((scaffold, oLength))
-                    if (not self.checkIfUsed(scaffold.getOverlaps(), self.getContig())) and markScaffolds:
-                        scaffold.overlaps.append(self.getContig())
-        if len(overlaps) > 1:
-            ordered=sorted(overlaps, key=itemgetter(1), reverse=True)
-            best=ordered[0]
-            onlyOverlap=best[0]
-            self.overlap=[onlyOverlap,]
-            return [onlyOverlap,]
+    
+    def uniqueBisectScafSearch(self, scafList):
+        #Find a scaffold in which the entirety of the segment maps
+        totScafs=len(scafList)
+        trialIndex=totScafs/2
+        if (self.getStart() >= scafList[trialIndex].getStart()) and (self.getEnd() <= scafList[trialIndex].getEnd()):
+            return scafList[trialIndex]
+        elif totScafs==1:
+            raise NoUniqueScafError(self.getName())
+        elif self.getStart() > scafList[trialIndex].getStart():
+            return self.uniqueBisectScafSearch(scafList[trialIndex:])
         else:
-            overlap=overlaps[0]
-            onlyOverlap=overlap[0]
-            self.overlap=[onlyOverlap,]
-            return [onlyOverlap,]
+            return self.uniqueBisectScafSearch(scafList[:trialIndex])
+            
+    def nonUniqueBisectScafSearch(self, scafList):
+        #in cases where there is no unique match, find the scaffold or scaffolds that include at least part of the segment
+        totScafs=len(scafList)
+        trialIndex=totScafs/2
+        outList=[]
+        newSegs=[]
+        #If the seg maps to the end of the scaffold, add it to the results, and see if it also maps to the next scaffold
+        #also, cut off the segment at the scaffold edge.
+        if (self.getStart() >= scafList[trialIndex].getStart()) and (self.getStart() <= scafList[trialIndex].getEnd()):
+            startSeg=copy.copy(self)
+            startSeg.end=scafList[trialIndex].getEnd()
+            startSeg.name=self.getName()+"a"
+            newSegs.append(startSeg)
+            outList.append(scafList[trialIndex])
+            try:
+                if (self.getEnd() >= scafList[trialIndex+1].getStart()) and (self.getEnd() <= scafList[trialIndex+1].getEnd()):
+                    endSeg=copy.copy(self)
+                    endSeg.start=scafList[trialIndex+1].getStart()
+                    endSeg.name=self.getName()+"b"
+                    newSegs.append(endSeg)
+            except IndexError:
+                self.end=newSegs[0].end
+                return outList
+            if len(newSegs)==1:
+                self.end=newSegs[0].end
+                return outList
+            else:
+                return newSegs
+        
+        #If the seg maps to the beginning of the scaffold, add it to the results, and see if it also maps to the previous scaffold
+        #also, cut off the segment at the scaffold edge.
+        elif (self.getEnd() >= scafList[trialIndex].getStart()) and (self.getEnd() <= scafList[trialIndex].getEnd()):
+            endSeg=copy.copy(self)
+            endSeg.start=scafList[trialIndex].getStart()
+            endSeg.name=self.getName()+"b"
+            newSegs.append(endSeg)
+            outList.append(scafList[trialIndex])
+            try:
+                if (self.getStart() >= scafList[trialIndex-1].getStart()) and (self.getStart() <= scafList[trialIndex-1].getEnd()):
+                    startSeg=copy.copy(self)
+                    startSeg.end=scafList[trialIndex-1].getEnd()
+                    startSeg.name=self.getName()+"a"
+                    newSegs.append(startSeg)
+            except IndexError:
+                self.start=newSegs[0].start
+                return outList
+            if len(newSegs)==1:
+                self.start=newSegs[0].start
+                return outList
+            else:
+                return newSegs
+              
+        elif totScafs==1:
+            raise NoUniqueScafError(self.getName())
+        elif self.getStart() > scafList[trialIndex].getStart():
+            return self.nonUniqueBisectScafSearch(scafList[trialIndex-1:])
+        else:
+            return self.nonUniqueBisectScafSearch(scafList[:trialIndex+1])
+
+    def findOverlaps(self, scaffoldDict, markScaffolds):
+        #find the scaffold(s) to which this segment maps. 
+        #updated 6/27/17 to use a dictionary structure for the scaffolds instead of a list.
+        #if there is a single scaffold, return the scaffold. If there are multiple, return segments split at the 
+        #scaffold break and run them through again
+        overlaps=[]
+        #get the non-N scaffolds that are on the same chromosome 
+        sameChrom=scaffoldDict[self.getChrom()][0]
+        #use bisection search to try to find a scaffold to which the entire segment aligns. This should be almost all of them.
+        try:
+            bestOverlap=self.uniqueBisectScafSearch(sameChrom)
+            overlaps.append(bestOverlap)
+
+        except NoUniqueScafError:
+            nonUniqueMatch=self.nonUniqueBisectScafSearch(sameChrom)
+            if len(nonUniqueMatch) ==1:
+                overlaps+=nonUniqueMatch
+                bestOverlap=overlaps[0]
+            else:
+                return nonUniqueMatch
+
+        if markScaffolds:
+            for overlap in overlaps:
+                if not (self.checkIfUsed(overlap.getOverlaps(), self.getContig())):
+                    overlap.overlaps.append(self.getContig())
+                    
+        self.overlap=[bestOverlap,]
+        return [bestOverlap,]
+
 
     def getOverlap(self):
         return self.overlap

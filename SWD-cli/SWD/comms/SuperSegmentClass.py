@@ -133,15 +133,14 @@ class SuperSegment(object):
         end=last.getBackbone().getEnd()
 
         #If this superScaffold is an extension, add the contig pieces to either side so we can get rid of the abutting stretches of N's
-        if self.getJoinType()=="ext":
-            if self.getPartsInOrder()[0].getType()==Contig:
-                scafStart=self.getPartsInOrder()[1].getStart()
-                conPiece=self.getPartsInOrder()[0].getLength()
-                start-=(conPiece-scafStart)
-            if self.getPartsInOrder()[-1].getType()==Contig:
-                scafEnd=self.getPartsInOrder()[-2].getBackboneLength()-self.getPartsInOrder()[-2].getEnd()
-                conPiece=self.getPartsInOrder()[-1].getLength()
-                end+=conPiece-scafEnd
+        if self.getPartsInOrder()[0].getType()==Contig:
+            scafStart=self.getPartsInOrder()[1].getStart()
+            conPiece=self.getPartsInOrder()[0].getLength()
+            start-=(conPiece-scafStart)
+        if self.getPartsInOrder()[-1].getType()==Contig:
+            scafEnd=self.getPartsInOrder()[-2].getBackboneLength()-self.getPartsInOrder()[-2].getEnd()
+            conPiece=self.getPartsInOrder()[-1].getLength()
+            end+=conPiece-scafEnd
         return (start,end )
 
     def isOverlapping(self, otherSuperSegment):
@@ -288,10 +287,10 @@ class SuperSegment(object):
 
     def hasNewInfo(self, otherSuper):
         unique=False
-        otherScaffolds=[]
-        for scaf in otherSuper.getUsedScaffolds():
-            otherScaffolds.append(scaf.getName())
-        for scaffold in self.getScaffolds():
-            if scaffold.getName() not in otherScaffolds:
+        otherBackbones=[]
+        for part in otherSuper.getPartsInOrder():
+            otherBackbones.append(part.getName())
+        for part in self.getPartsInOrder():
+            if part.getName() not in otherBackbones:
                 unique=True
         return unique
