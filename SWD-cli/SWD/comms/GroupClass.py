@@ -210,7 +210,7 @@ class Group(object):
 
             if orderedSegs[-1].getDistanceFromScafEnd() < (contig.getLength()-orderedSegs[-1].getConEnd()):
                 lastPart=[(contig,orderedSegs[-1].getConEnd(),contig.getLength(),contig.getStrand()),]
-                baseEnd=contig.getLength()-orderedSegs[-1].getDistanceFromScafEnd()
+                baseEnd=contig.getConnectors()[0].getLength()-orderedSegs[-1].getDistanceFromScafEnd()
             else:
                 lastPart=[]
 
@@ -243,7 +243,7 @@ class Group(object):
 
             if orderedSegs[-1].getDistanceFromScafEnd() < orderedSegs[-1].getConStart():
                 lastPart=[(contig,contig.getLength()-orderedSegs[-1].getConStart()+1,contig.getLength(),contig.getStrand()),]
-                baseEnd=contig.getLength()-orderedSegs[-1].getDistanceFromScafEnd()
+                baseEnd=contig.getConnectors()[0].getLength()-orderedSegs[-1].getDistanceFromScafEnd()
             else:
                 lastPart=[]
 
@@ -949,8 +949,8 @@ class Group(object):
     def distanceBetweenSegsChecks(self,seg1, seg2):
         #print "distanceBetweenSegsChecks"
         #See if segments are next to each other on the contig that they come from.
-        #updated June 26, 2017.
-        return abs(seg2.getConStart()-seg1.getConEnd()) < 1000
+        #updated June 26, 2017. Not really sure what a reasonable number is for this.
+        return abs(seg2.getConStart()-seg1.getConEnd()) < 10000
 
 
 
