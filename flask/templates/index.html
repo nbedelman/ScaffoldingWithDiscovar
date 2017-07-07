@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Flask React Tutorial</title>
 </head>
+
 <body>
-     <div id="mount-point">
-         <p1>Hello world.</p1>
-     </div>
+  <script type="text/javascript" src="{{ url_for('static', filename='bundle.js') }}"></script>
+  <div id="reactEntry"></div>
 </body>
-</html>
