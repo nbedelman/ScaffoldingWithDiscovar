@@ -9816,12 +9816,65 @@ var Hello = function (_React$Component) {
   }
 
   _createClass(Hello, [{
-    key: 'render',
+    key: "render",
     value: function render() {
       return _react2.default.createElement(
-        'div',
+        "div",
         null,
-        'Hello, there'
+        _react2.default.createElement(
+          "label",
+          null,
+          "Upload MAF Alignment",
+          _react2.default.createElement("input", { type: "file" })
+        ),
+        _react2.default.createElement(
+          "label",
+          null,
+          "Upload New Genome (FASTA)",
+          _react2.default.createElement("input", { type: "file" })
+        ),
+        _react2.default.createElement(
+          "label",
+          null,
+          "Upload New Genome (FASTA)",
+          _react2.default.createElement("input", { type: "file" })
+        ),
+        _react2.default.createElement(
+          "label",
+          null,
+          "Upload Reference Genome (FASTA)",
+          _react2.default.createElement("input", { type: "file" })
+        ),
+        _react2.default.createElement(
+          "label",
+          null,
+          "N-length",
+          _react2.default.createElement("input", { type: "number" })
+        ),
+        _react2.default.createElement(
+          "label",
+          null,
+          "Combine Method",
+          _react2.default.createElement(
+            "select",
+            null,
+            _react2.default.createElement(
+              "option",
+              null,
+              "First"
+            ),
+            _react2.default.createElement(
+              "option",
+              null,
+              "Best"
+            ),
+            _react2.default.createElement(
+              "option",
+              null,
+              "Longest"
+            )
+          )
+        )
       );
     }
   }]);
