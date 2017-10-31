@@ -15,7 +15,7 @@ for subdir, dirs, files in os.walk(inputDir):
     for file in files:
         if "discoOrder.fasta" in file:
             header=file.split(".")[0]+"_"+str(round)
-            prevNs=False
+            prevNs=True
             chrom=SeqIO.parse(inputDir+"/"+file,"fasta")
             thisChrom=SeqIO.SeqRecord(seq="", id=header)
             for record in chrom:

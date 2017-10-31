@@ -77,7 +77,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
             chromosome.writeCoordinates(chromosome.getOverwrittenSupers(), overwritten=True)
             chromosome.writeOverviewResults()
             print("wrote results")
-            #chromosome.writeFasta(originalGenome, discovarAssembly)
+            chromosome.writeFasta(originalGenome, discovarAssembly)
             print ("done")
         else:
             unGrouped=chromosome
@@ -96,7 +96,7 @@ def runAll(bedDirectory, agpBedFile, originalGenome, discovarAssembly, ungrouped
         unGrouped.writeCoordinates(chromosome.getOverwrittenSupers(), overwritten=True)
         unGrouped.writeOverviewResults()
         print("wrote results")
-        #unGrouped.writeFasta(originalGenome, discovarAssembly)
+        unGrouped.writeFasta(originalGenome, discovarAssembly)
     print ("done")
     print ("COMPLETED")
     return chromosomes
@@ -153,7 +153,7 @@ def combineSegments(contigList):
 def readScaffold(bedFile):
     '''take a bed file
     return a list of objects of class scaffold, in the order they are in the file'''
-    #6/27/27 using a list format is making the findOverlaps step extremely slow. 
+    #6/27/27 using a list format is making the findOverlaps step extremely slow.
     #I think a dictionary would make it faster.
     #bedList=[]
     #with open(bedFile,"r") as f:
@@ -177,7 +177,7 @@ def readScaffold(bedFile):
                 except KeyError:
                     bedDict[scaf.getChrom()]=[[],[scaf,]]
     return bedDict
-    
+
 
 def groupPiecesByChromosome(contigs, scaffolds):
     chromDict={}
