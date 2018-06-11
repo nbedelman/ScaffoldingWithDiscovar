@@ -42,19 +42,19 @@ dev.off()
 #Graph the percentage contigs that have each quality for each size bin
 
 #define the length of an alignment as it's end position - start position
+aligns$ConEnd <- as.numeric(as.character(aligns$ConEnd))
+aligns$ConStart <- as.numeric(as.character(aligns$ConStart))
 aligns$length=aligns$ConEnd-aligns$ConStart
 
 #subset the alignments by length, and put the resulting data frames into a list
-FiveHundred=subset(aligns,length<500)
-OneKB=subset(aligns,length<1000 & length >= 500)
-FiveKB=subset(aligns,length<5000 & length >= 1000)
+FiveKB=subset(aligns,length<5000)
 TenKB=subset(aligns,length<10000 & length >= 5000)
 FiftyKB=subset(aligns,length<50000 & length >= 10000)
 HundredKB=subset(aligns,length<100000 & length >= 50000)
 HundredKBPlus=subset(aligns,length>=100000)
 
-sizes  <- list(FiveHundred,OneKB,FiveKB,TenKB,FiftyKB,HundredKB,HundredKBPlus)
-sizeStrings  <- c("FiveHundred","OneKB","FiveKB","TenKB","FiftyKB","HundredKB","HundredKBPlus")
+sizes  <- list(FiveKB,TenKB,FiftyKB,HundredKB,HundredKBPlus)
+sizeStrings  <- c("FiveKB","TenKB","FiftyKB","HundredKB","HundredKBPlus")
 
 #function to get the values of each quality category for a given size category
 getStats  <- function(aSubset){
@@ -71,19 +71,19 @@ for (size in seq(1,length(sizes))){
 colnames(allStats) <- c("labels",sizeStrings)
 
 #make the absolute values into percentages
-for (i in seq(2,8)){
+for (i in seq(2,6)){
   allStats[,i]=allStats[,i]/sum(allStats[,i])
 }
 
 #flip the data frame
 n<-allStats$labels
-allStats<-as.data.frame(t(allStats[,2:8]))
+allStats<-as.data.frame(t(allStats[,2:6]))
 colnames(allStats) <- n
 allStats$labels  <- factor(row.names(allStats))
 
 #make stacked bar graph
 DF2 <- melt(allStats, id.var="labels")
-DF2$labels<-factor(DF2$labels,levels=c("FiveHundred","OneKB","FiveKB","TenKB","FiftyKB","HundredKB","HundredKBPlus"))
+DF2$labels<-factor(DF2$labels,levels=c("FiveKB","TenKB","FiftyKB","HundredKB","HundredKBPlus"))
 colors=c("darkblue","blue","cyan","red","pink","orange","yellow","green","forestgreen")
 ggplot(DF2, aes(x = labels, y = value, fill = variable))+
   geom_bar(stat = "identity", width=.5)+ scale_fill_manual(values=colors)+

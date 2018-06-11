@@ -17,8 +17,12 @@ def coordinatesToTSV(coordinateFile,outFile):
     for line in c:
         if "number" in line:
             name=line.split("_")
-            currentChrom=name[0]+"_"+name[1]
-            currentGroup=name[3].strip("\n")
+            #this one works for dryas
+            # currentChrom=name[0]+"_"+name[1]
+            # currentGroup=name[3].strip("\n")
+            #This one works for Hmel
+            currentChrom=name[0]
+            currentGroup=name[2].strip("\n")
         elif line != "\n":
             coords=line.split(",")
             output='''%s\t%s\t%s\t%s\t%s\t%s''' % (currentChrom,currentGroup,coords[0],coords[1],coords[2],coords[3])
