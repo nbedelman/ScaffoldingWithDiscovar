@@ -77,28 +77,33 @@ class Contig(object):
     def getConnectors(self):
         return self.connectors
 
-    def combineSegments(self):
+    def combineSegments(self,multiScafs=True):
         '''here, combine segments that are very close to each other and really represent a single long mapping.
-        Also get rid of very small (and therefore possibly spurious) alignments. Here, "small" is <1000 bp AND < 75% of the scaffold to which it maps'''
+        Also get rid of very small (and therefore possibly spurious) alignments. Here, "small" is <500 bp AND < 75% of the scaffold to which it maps'''
         if self.getGoodSegments() == []:
             raise NoSegmentError("Remember to cull segments before combining!")
         #elif len(self.getGoodSegments()) ==1:
         #    raise NotInformativeError("After culling, this contig no longer maps to two scaffolds")
         else:
             orderedSegs=self.orderSegs(self.getGoodSegments())
-            combinedSegs=self.combineLists(orderedSegs)
+            combinedSegs=self.combineLists(orderedSegs, multiScafs)
             #if len(combinedSegs) == 1:
             #    raise NotInformativeError("After combining, this contig no longer maps to two scaffolds")
             #else:
             longEnough=[]
             for seg in combinedSegs:
-                overlapLength=seg.getOverlap()[0].getLength()
-                mappingPercent=float(seg.getConEnd()-seg.getConStart())/overlapLength
-                if (seg.getConEnd()-seg.getConStart() > 1000) or (mappingPercent > .75) :
+                #Added the multiScafs flag when creating the findInversions functionality. 
+                #In findInversions, we're using sincle-contig data only.
+                if multiScafs:
+                    overlapLength=seg.getOverlap()[0].getLength()
+                    mappingPercent=float(seg.getConEnd()-seg.getConStart())/overlapLength
+                else:
+                    mappingPercent=0
+                if (seg.getConEnd()-seg.getConStart() > 500) or (mappingPercent > .75) :
                     longEnough.append(seg)
             self.combinedSegments=longEnough
     def outputBed(self, segList, fileName):
-        with open(fileName, "w") as o:
+        with open(fileName, "a+") as o:
             for segment in segList:
                 outList=[]
                 outString=''
@@ -149,13 +154,13 @@ class Contig(object):
 
 
 
-    def combineLists(self, goodSegs):
+    def combineLists(self, goodSegs, multiScafs):
         combined=[]
         goodIndices=[]
         for i in (range(len(goodSegs)-1)):
             j=goodSegs[i]
             k=goodSegs[i+1]
-            out = self.tryCombining(j,k)
+            out = self.tryCombining(j,k, multiScafs)
             if out:
                 goodIndices+=i,i+1
                 combined.append(out)
@@ -165,13 +170,13 @@ class Contig(object):
         if len(goodSegs) == len(combined):
             return goodSegs
         else:
-            return self.combineLists(combined)
+            return self.combineLists(combined,multiScafs)
 
 
-    def tryCombining(self, segOne, segTwo):
+    def tryCombining(self, segOne, segTwo, multiScafs):
         if segOne.getStrand()!=segTwo.getStrand():
             return False
-        elif segOne.getOverlap()[0].getName() != segTwo.getOverlap()[0].getName():
+        elif multiScafs and (segOne.getOverlap()[0].getName() != segTwo.getOverlap()[0].getName()):
             return False
         elif (abs(segOne.getEnd()-segTwo.getStart()) < 1000 and self.closeOnContig(segOne, segTwo)) or ((segOne.getEnd() > segTwo.getStart())and (segOne.getStart() < segTwo.getStart())):
             newSegment=copy.copy(segOne)

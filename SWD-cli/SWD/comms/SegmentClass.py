@@ -114,7 +114,7 @@ class Segment(object):
     def uniqueBisectScafSearch(self, scafList):
         #Find a scaffold in which the entirety of the segment maps
         totScafs=len(scafList)
-        trialIndex=totScafs/2
+        trialIndex=int(totScafs/2)
         if (self.getStart() >= scafList[trialIndex].getStart()) and (self.getEnd() <= scafList[trialIndex].getEnd()):
             return scafList[trialIndex]
         elif totScafs==1:
@@ -127,7 +127,7 @@ class Segment(object):
     def nonUniqueBisectScafSearch(self, scafList):
         #in cases where there is no unique match, find the scaffold or scaffolds that include at least part of the segment
         totScafs=len(scafList)
-        trialIndex=totScafs/2
+        trialIndex=int(totScafs/2)
         outList=[]
         newSegs=[]
         #If the seg maps to the end of the scaffold, add it to the results, and see if it also maps to the next scaffold

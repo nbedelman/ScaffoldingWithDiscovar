@@ -137,12 +137,14 @@ def cullSegments(contigList):
         i.cullSegments()
     return
 
-def combineSegments(contigList):
+def combineSegments(contigList, multiScafs=True):
     '''small script to loop through each contig and combine alignments that are very close to one another'''
+    #Added the multiScafs flag when creating the findInversions functionality. 
+    #In findInversions, we're using sincle-contig data only.
     combined=[]
     for i in contigList:
         try:
-            i.combineSegments()
+            i.combineSegments(multiScafs)
             combined.append(i)
         except NotInformativeError:
             pass
