@@ -18,6 +18,7 @@ export PATH=$PATH:/n/mallet_lab/edelman/software/kentUtils/bin
 #export PATH=$PATH:/n/regal/mallet_lab/edelman/dryasAssembly/scripts
 
 config=$1
+part=$2
 source $config
 
 currentDir=$(pwd)
@@ -34,21 +35,21 @@ mkdir -p $outBase/chainedAxt
 mkdir -p $outBase/chainedMaf
 
 
-query=$queryLoc/*.part-${SLURM_ARRAY_TASK_ID}.fasta
-alignOut=$outBase/mafs/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns.maf
+query=$queryLoc/*.part-$part.fasta
+alignOut=$outBase/mafs/$outBase.part-$part\_alns.maf
 referenceSize=$outBase/sizes/$(basename $referenceAssembly).size
 querySize=$outBase/sizes/$(basename $queryAssembly).size
 referenceTwoBit=$outBase/twoBit/$(basename $referenceAssembly).2bit
 queryTwoBit=$outBase/twoBit/$(basename $queryAssembly).2bit
-axtOut=$outBase/axt/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns.axt
-axtSorted=$outBase/axt/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted.axt
-chainOut=$outBase/chain/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted.chain
-refNetOut=$outBase/net/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_ref.net
-queryNetOut=$outBase/net/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_query.net
-chainedAxtRefOut=$outBase/chainedAxt/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained_ref.axt
-chainedAxtQuerOut=$outBase/chainedAxt/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained_quer.axt
-chainedMafRefOut=$outBase/chainedMaf/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained_ref.maf
-chainedMafQuerOut=$outBase/chainedMaf/$outBase.part-${SLURM_ARRAY_TASK_ID}_alns_sorted_chained_quer.maf
+axtOut=$outBase/axt/$outBase.part-$part\_alns.axt
+axtSorted=$outBase/axt/$outBase.part-$part\_alns_sorted.axt
+chainOut=$outBase/chain/$outBase.part-$part\_alns_sorted.chain
+refNetOut=$outBase/net/$outBase.part-$part\_alns_sorted_ref.net
+queryNetOut=$outBase/net/$outBase.part-$part\_alns_sorted_query.net
+chainedAxtRefOut=$outBase/chainedAxt/$outBase.part-$part\_alns_sorted_chained_ref.axt
+chainedAxtQuerOut=$outBase/chainedAxt/$outBase.part-$part\_alns_sorted_chained_quer.axt
+chainedMafRefOut=$outBase/chainedMaf/$outBase.part-$part\_alns_sorted_chained_ref.maf
+chainedMafQuerOut=$outBase/chainedMaf/$outBase.part-$part\_alns_sorted_chained_quer.maf
 
 #find local alignments between query sequences and reference sequences
 SWD.py lastAlign $referenceDB $query $lastalConfig | maf-sort.sh > $alignOut
@@ -87,8 +88,8 @@ axtToMaf $chainedAxtRefOut.sorted.axt $referenceSize $querySize  $chainedMafRefO
 axtToMaf $chainedAxtQuerOut.sorted.axt $querySize $referenceSize  $chainedMafQuerOut
 
 # ##Make a folder in which to put the bed files for each contig; then make the files
-mkdir -p $outBase/beds/${SLURM_ARRAY_TASK_ID}_tmp
-cd $outBase/beds/${SLURM_ARRAY_TASK_ID}_tmp
+mkdir -p $outBase/beds/$part\_tmp
+cd $outBase/beds/$part\_tmp
 
 SWD.py mafToBed ../../../$chainedMafRefOut ../../../$queryAssembly
 
@@ -96,13 +97,13 @@ SWD.py mafToBed ../../../$chainedMafRefOut ../../../$queryAssembly
 #Also put the overviews into the allOverviews file. Then get rid of the temporary folder.
 for i in *.bed
 do cp $i ../$i
-cat $i >> ${SLURM_ARRAY_TASK_ID}.bed
+cat $i >> $part\.bed
 tail -n +2 $i >> ../$outBase\_allContigs.bed
 head -n 1 $i >> ../$outBase\_allOverviews.bed
 done
 
 cd ..
-rm -Rf ${SLURM_ARRAY_TASK_ID}_tmp
+rm -Rf $part\_tmp
 
 #clean up intermediate files
 cd $currentDir

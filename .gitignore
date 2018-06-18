@@ -12,6 +12,8 @@
 
 .DS_Store
 
+SWD-cli/build
+
 SWD-cli/SWD/.DS_Store
 
 data/fullOverlaps/flattened_line_13528.bed
@@ -20,8 +22,5 @@ results_160317/.DS_Store
 
 sizeDistEnvScaffolds.tiff
 
-data/fullOverlaps/flattened_line_13528.bed
 
-*.bed
 
-*.bed
