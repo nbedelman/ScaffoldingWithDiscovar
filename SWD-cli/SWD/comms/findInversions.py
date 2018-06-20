@@ -10,7 +10,7 @@ import string
 import copy
 from operator import itemgetter
 
-sys.path.insert(0, '/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/ScaffoldingWithDiscovar/SWD-cli/SWD/comms/')
+# sys.path.insert(0, '/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/ScaffoldingWithDiscovar/SWD-cli/SWD/comms/')
 
 from ScaffoldClass import *
 from ContigClass import *
@@ -24,9 +24,18 @@ from reOrderScaffolds import read_csv, write_csv, groupPiecesByChromosome, makeC
 
 
 #agpBedFile="/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/Hmel3/Hmel2_ordered_simpleName.fa.bed"
-agpBedFile="/Users/nbedelman/Documents/Mallet_Lab/18Genomes/Genomic_Analysis/correctScaffs_fixed.bed"
+#agpBedFile="/Users/nbedelman/Documents/Mallet_Lab/18Genomes/Genomic_Analysis/correctScaffs_fixed.bed"
+# agpBedFile="/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/refGenomeChrom.fasta.bed"
+# bedDirectory="/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/inversionBeds"
+# bpFile="/Users/nbedelman/Desktop/inversionCandidates/breakPoints.bed"
+
+agpBedFile=sys.argv[1]
+bedDirectory=sys.argv[2]
+outDir=sys.argv[3]
+pctThreshold=sys.argv[4]
+minLength=sys.argv[5]
+
 scaffolds=readScaffold(agpBedFile)
-bedDirectory="/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/inversionBeds"
 rawContigs=readAllContigs(bedDirectory,None)
 for contig in rawContigs:
     contig.findConnectors(scaffolds, "good")
@@ -34,9 +43,14 @@ cullSegments(rawContigs)
 simpContigs=combineSegments(rawContigs, multiScafs=False)
 for contig in simpContigs:
     contig.findConnectors(scaffolds, 'combined')
+o=open(outDir/"allBreakPoints.bed","w")
 for i in simpContigs:
     inv=InversionCandidate(i)
-    inv.findInversion()
+    inv.findInversion(pctThreshold,minLength)
     if inv.isInversion:
-        interted=inv
-        inv.outputBed(inv.getSegments(),'''/Users/nbedelman/Desktop/inversionCandidates/%s.bed''' % (inv.getContig().getName()))
+        # inverted=inv
+        inv.outputBed(inv.getSegments(),'''%s/%s.bed''' % (outDir,inv.getContig().getName()))
+        o.write(inv.getBreakPoints())
+o.close()
+        
+        
