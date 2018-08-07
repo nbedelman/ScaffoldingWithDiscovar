@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #findInversions.py
 #look for inversions between a DISCOVAR genome and a reference genome. Only consider those deletions found WITHIN a single reference scaffold.
 import sys
@@ -10,7 +12,9 @@ import string
 import copy
 from operator import itemgetter
 
-sys.path.insert(0, '/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/ScaffoldingWithDiscovar/SWD-cli/SWD/comms/')
+
+# sys.path.insert(0, '/Users/nbedelman/Documents/Mallet_Lab/referenceScaffolding/ScaffoldingWithDiscovar/SWD-cli/SWD/comms/')
+
 
 from ScaffoldClass import *
 from ContigClass import *
@@ -48,9 +52,6 @@ for i in simpContigs:
     inv=InversionCandidate(i)
     inv.findInversion(pctThreshold,minLength)
     if inv.isInversion:
-        # inverted=inv
         inv.outputBed(inv.getSegments(),'''%s/%s.bed''' % (outDir,inv.getContig().getName()))
         o.write(inv.getBreakPoints())
 o.close()
-        
-        
