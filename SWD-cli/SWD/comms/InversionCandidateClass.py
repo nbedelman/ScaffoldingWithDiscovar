@@ -84,6 +84,7 @@ class InversionCandidate(Contig):
             internalOK=self.isTrueInternal(segList)
         return posOK and negOK and internalOK and fullOK and (numChanges < 3)
 
+
     def isTrueInternal(self,segList):
         goodInternal=True
         mainDirection=segList[0].getStrand()

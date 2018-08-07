@@ -888,7 +888,7 @@ class Group(object):
 
             contigDiff=seg2.getConStart()-seg1.getConEnd()
             if contigDiff <0:
-                startOfEndScafOverlap=max(endSeg.getDistanceFromScafStart(), 0)
+                startOfEndScafOverlap=max(endSeg.getDistanceFromScafStart()-contigDiff, 0)
                 endScafSeg=(endScaf,startOfEndScafOverlap, endScaf.getLength(), endScaf.getStrand())
                 output=[firstScafSeg,endScafSeg]
             elif contigDiff >=0:
