@@ -78,20 +78,21 @@ class Contig(object):
         return self.connectors
 
     def combineSegments(self,multiScafs=True):
-        '''here, combine segments that are very close to each other and really represent a single long mapping.
-        Also get rid of very small (and therefore possibly spurious) alignments. Here, "small" is <500 bp AND < 75% of the scaffold to which it maps'''
+        '''here, originally combines segments that are very close to each other and really represent a single long mapping. 
+        However, that was buggy and resulted in some instances where the combined contig length was not correct, which led to incorrect joins. 
+        Therefore, amended to only filter out  very small (and therefore possibly spurious) alignments. Here, "small" is <500 bp AND < 75% of the scaffold to which it maps'''
         if self.getGoodSegments() == []:
             raise NoSegmentError("Remember to cull segments before combining!")
         #elif len(self.getGoodSegments()) ==1:
         #    raise NotInformativeError("After culling, this contig no longer maps to two scaffolds")
         else:
             orderedSegs=self.orderSegs(self.getGoodSegments())
-            combinedSegs=self.combineLists(orderedSegs, multiScafs)
+            #combinedSegs=self.combineLists(orderedSegs, multiScafs)
             #if len(combinedSegs) == 1:
             #    raise NotInformativeError("After combining, this contig no longer maps to two scaffolds")
             #else:
             longEnough=[]
-            for seg in combinedSegs:
+            for seg in orderedSegs:#combinedSegs:
                 #Added the multiScafs flag when creating the findInversions functionality. 
                 #In findInversions, we're using sincle-contig data only.
                 if multiScafs:
