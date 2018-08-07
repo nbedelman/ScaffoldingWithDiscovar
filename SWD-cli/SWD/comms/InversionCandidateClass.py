@@ -68,6 +68,7 @@ class InversionCandidate(Contig):
         currentDirection=''
         positiveLength=0
         negativeLength=0
+        internalOK=True
         for seg in segList:
             if seg.getStrand()=='+':
                 positiveLength+=seg.getLength()
@@ -78,7 +79,19 @@ class InversionCandidate(Contig):
                 numChanges+=1
         posOK=float(positiveLength)/self.getContig().getLength() > pctThreshold
         negOK=float(negativeLength)/self.getContig().getLength() > pctThreshold
-        return posOK and negOK and numChanges<3
+        if numChanges==2:
+            internalOK=self.isTrueInternal(segList)    
+        return posOK and negOK and internalOK and (numChanges < 3)
+
+    def isTrueInternal(self,segList):
+        goodInternal=True
+        mainDirection=segList[0].getStrand()
+        scafStart=segList[0].getRelStart()
+        scafEnd=segList[0].getRelEnd()
+        for seg in segList:
+            if (seg.getStart()<scafStart) or (seg.getEnd()>scafEnd):
+                goodInternal=False
+        return goodInternal
     
     def areOverlapping(self,seg1,seg2):
         if (seg1.getConStart() >= seg2.getConStart()) and (seg1.getConStart() <= seg2.getConEnd()):
