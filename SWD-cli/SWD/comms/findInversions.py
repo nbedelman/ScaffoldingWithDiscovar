@@ -36,8 +36,8 @@ from reOrderScaffolds import read_csv, write_csv, groupPiecesByChromosome, makeC
 agpBedFile=sys.argv[1]
 bedDirectory=sys.argv[2]
 outDir=sys.argv[3]
-pctThreshold=sys.argv[4]
-minLength=sys.argv[5]
+pctThreshold=float(sys.argv[4])
+minLength=int(sys.argv[5])
 
 scaffolds=readScaffold(agpBedFile)
 rawContigs=readAllContigs(bedDirectory,None)
@@ -47,7 +47,7 @@ cullSegments(rawContigs)
 simpContigs=combineSegments(rawContigs, multiScafs=False)
 for contig in simpContigs:
     contig.findConnectors(scaffolds, 'combined')
-o=open(outDir/"allBreakPoints.bed","w")
+o=open(outDir+"/allBreakPoints.bed","w")
 for i in simpContigs:
     inv=InversionCandidate(i)
     inv.findInversion(pctThreshold,minLength)
